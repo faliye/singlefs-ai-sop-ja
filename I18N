@@ -1,4 +1,8 @@
+# 语言族配置。开发者按自己的语言选用对应版本：目前有中文、英语、日语，更多版本开发中。
+# this 是本仓的语言；reference 是参照仓（清单与门禁脚本放在那一份，其余语言原样复制）；
+# default 是默认版本；languages 是已发布的语言。
 family=singlefs-ai-sop
 this=ja
+reference=zh
 default=en
 languages=zh ja en
