@@ -146,6 +146,6 @@ num_china_people[Ethnicity::Han][Gender::Woman][AgeBand::T18to24]
 
 | 面 | どこに置かれているか |
 |---|---|
-| 実装 | `machine-first.md`、`fs-design.md` の分岐規則、`kb-discipline.md` |
+| 実装 | `machine-first.md`、`kb-discipline.md`、および各プロジェクト固有の設計規律 |
 | レビュー | `show-me-test.md` の howto 要件、`design-doc-discipline.md`、決定記録の根拠要件 |
 | 境界 | `show-me-test.md`「ゲートが証明できること・できないこと」 |
