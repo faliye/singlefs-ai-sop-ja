@@ -1,4 +1,4 @@
-<!-- generated-from: rules/command-safety.md sha256:61554fda8736c53b8619dd0251e25569cb4333c648af30e995e06ab1fe1c9bb7 -->
+<!-- generated-from: rules/command-safety.md sha256:4c85060ea2cf3a6ae3b45612bdb3084db0aaa003262bd81646b9fea3a7a52ad7 -->
 <!-- doc-lint:rule-definition -->
 # プロセスとコマンドの規範
 

@@ -1,4 +1,4 @@
-<!-- generated-from: rules/kb-discipline.md sha256:6febe472e25bd33c62c7cd1e739852b90db4aac7a1798a9e45e15f454d69d2df -->
+<!-- generated-from: rules/kb-discipline.md sha256:58ce193023eca2b75952994b5357abc40e9370e78e7d4e01894bfae420970b5f -->
 <!-- doc-lint:rule-definition -->
 # 知識文書の鉄則
 

@@ -1,4 +1,4 @@
-<!-- generated-from: rules/session-wrapup.md sha256:caf236a582896179c8a72828f743c3b9a61565a2ace3e7ea875acae7f76a9684 -->
+<!-- generated-from: rules/session-wrapup.md sha256:639c358813aa9b0719757d6e7a8d5ec9832ce095275b5870aa166d8b4634f800 -->
 <!-- doc-lint:rule-definition -->
 # 締め：毎回の作業の終わりに必ず行うこと
 

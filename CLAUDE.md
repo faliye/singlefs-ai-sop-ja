@@ -1,3 +1,4 @@
+<!-- generated-from: CLAUDE.md sha256:367e4fe94b069d2e85f501e43d2361e598a6de2cc21e1b1ca4937395875e7d51 -->
 <!-- doc-lint:rule-definition -->
 # singlefs-ai-sop-ja
 
