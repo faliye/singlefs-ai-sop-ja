@@ -18,11 +18,11 @@
 @.claude/singlefs-ai-sop/rules/writing-economy.md
 @.claude/singlefs-ai-sop/rules/session-wrapup.md
 
-**项目专有的规则**（只有本项目需要的那种）放 `.claude/rules/`，在这里一并 `@` 引用，
-不要上游到共享 SOP——那里只放跨项目通用的协作规范。
+**文件系统设计特有的规则**（事务、崩溃一致性、盘上格式那一类）放 `.claude/rules/`，
+在这里一并 `@` 引用，不要上游到共享 SOP——那里只放协作规范。
 
 （上面的 `@.claude/singlefs-ai-sop/...` 是 [singlefs-ai-sop](.claude/singlefs-ai-sop/README.md) 分发的共享规则，
-**改它们等于改所有项目**——要改就改上游并抬 `VERSION`，不许在项目里就地改。）
+**改它们等于改掉每个参与者的下限**——要改就改上游并抬 `VERSION`，不许在项目里就地改。）
 
 ## 项目本地事实
 

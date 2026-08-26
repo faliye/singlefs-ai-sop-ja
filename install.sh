@@ -75,7 +75,7 @@ description: $(sed -n 's/^description: //p' "$d/SKILL.md" | head -1)
 
 正文在共享层，读它：\`.claude/singlefs-ai-sop/skills/$n/SKILL.md\`
 
-**不要把正文抄到这里。** 抄了别的项目看不到，下次又会被抄一遍。
+**不要把正文抄到这里。** 正文只该有一处，抄一份就多出第二处，两处早晚说不同的话。
 STUB
 done
 
