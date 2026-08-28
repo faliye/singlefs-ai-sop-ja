@@ -45,6 +45,29 @@ else
   ok "规范版本 $pkg_ver"
   record "规范版本" PASS
 fi
+
+# 版本戳与副本一致，只证明「装的时候是这个版本」——证明不了「副本还是上游最新」。
+# 上游在兄弟目录时顺手比一下；比不了就**显式报未检查**，不静默放过。
+up_ver=""; up_dir=""
+fam="$(sed -n 's/^family=//p' "$SCRIPTS/../I18N" 2>/dev/null || echo singlefs-ai-sop)"
+for lang in $(sed -n 's/^languages=//p' "$SCRIPTS/../I18N" 2>/dev/null); do
+  cand="$(cd "$ROOT/.." 2>/dev/null && pwd)/$fam-$lang"
+  if [[ -f "$cand/VERSION" ]]; then up_ver="$(cat "$cand/VERSION")"; up_dir="$cand"; break; fi
+done
+if [[ -z "$up_ver" ]]; then
+  warn "未检查副本是否落后上游：兄弟目录里没找到上游仓"
+  howto "上游仓不在兄弟目录时这一项查不了，属于**未检查**不是通过。" \
+        "要查就把上游 clone 到 $(cd "$ROOT/.." 2>/dev/null && pwd)/$fam-<语言> 再跑。"
+elif [[ "$up_ver" != "$pkg_ver" ]]; then
+  bad "副本落后上游：副本 $pkg_ver，上游 $up_ver（$up_dir）"
+  howto "副本是拷贝不是链接，上游抬了版本副本不会自己跟。" \
+        "先读 cd $up_dir && git log 看改了什么，" \
+        "再重新拷贝一份副本，然后跑 bash .claude/$fam/install.sh 刷版本戳。"
+  record "副本与上游同版本" FAIL
+else
+  ok "副本与上游同版本 $up_ver"
+  record "副本与上游同版本" PASS
+fi
 fi
 
 # ── 阶段 0b：门禁自身（每条拒绝都要给出路）──────────────
