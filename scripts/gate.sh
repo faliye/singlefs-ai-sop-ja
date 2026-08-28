@@ -48,13 +48,23 @@ fi
 
 # 版本戳与副本一致，只证明「装的时候是这个版本」——证明不了「副本还是上游最新」。
 # 上游在兄弟目录时顺手比一下；比不了就**显式报未检查**，不静默放过。
+#
+# ⚠️ 先钉一件事：这里的 $pkg_ver 是**正在跑的这份门禁**所属包的版本，
+# 不一定是项目里装的那份副本。两者不同时（例如有人直接跑了上游那份 gate.sh），
+# 这条检查测的就不是它名字说的东西——那种情况必须判红，不能让它绿着糊弄过去。
 up_ver=""; up_dir=""
 fam="$(sed -n 's/^family=//p' "$SCRIPTS/../I18N" 2>/dev/null || echo singlefs-ai-sop)"
 for lang in $(sed -n 's/^languages=//p' "$SCRIPTS/../I18N" 2>/dev/null); do
   cand="$(cd "$ROOT/.." 2>/dev/null && pwd)/$fam-$lang"
   if [[ -f "$cand/VERSION" ]]; then up_ver="$(cat "$cand/VERSION")"; up_dir="$cand"; break; fi
 done
-if [[ -z "$up_ver" ]]; then
+inst_ver="$(cat "$ROOT/.claude/$fam/VERSION" 2>/dev/null || echo "")"
+if [[ -n "$inst_ver" && "$inst_ver" != "$pkg_ver" ]]; then
+  bad "跑的不是项目里那份副本：本门禁来自 $pkg_ver 的包，项目副本是 $inst_ver"
+  howto "这条检查比的是「跑的这份包」与上游，测不到项目副本。" \
+        "请改跑 bash .claude/scripts/gate.sh（它转发到项目副本），再看这一项。"
+  record "副本与上游同版本" FAIL
+elif [[ -z "$up_ver" ]]; then
   warn "未检查副本是否落后上游：兄弟目录里没找到上游仓"
   howto "上游仓不在兄弟目录时这一项查不了，属于**未检查**不是通过。" \
         "要查就把上游 clone 到 $(cd "$ROOT/.." 2>/dev/null && pwd)/$fam-<语言> 再跑。"
@@ -156,6 +166,44 @@ if [[ -d "$SCRIPTS/../rules" && -f "$SCRIPTS/manifest.sh" ]]; then
   if [[ -f "$SCRIPTS/../I18N" && "$(cd "$ROOT" && pwd)" == "$(cd "$SCRIPTS/.." && pwd)" ]]; then
     run_stage "三语同步" bash "$SCRIPTS/i18n-sync.sh"
   fi
+fi
+
+# ── 阶段 3c：项目本地阶段（.claude/gate.d/*.sh）─────────
+# 共享门禁管不了「这个项目自己的 kb 该长什么样」这类检查，但那类检查同样必须**会红**，
+# 不能只写在文档里当提醒句（rules/show-me-test.md：踩过的坑要做成会失败的检查）。
+# 所以留一个挂载点：项目把自己的检查丢进 .claude/gate.d/，门禁按文件名排序逐个当阶段跑。
+#
+# 三条纪律与其余阶段一致：
+#   1. 目录不存在 ⇒ 说「项目没有本地阶段」，不记阶段——那不是「通过」，是「没有」
+#   2. 脚本存在但跑不起来（没有执行位、语法错、找不到解释器）⇒ **判红**，不许当成跳过
+#   3. 阶段名取脚本头部的 `# gate-stage: <名字>`，没写就用文件名——名字要出现在汇总里
+head1 "项目本地阶段"
+GATE_D="$ROOT/.claude/gate.d"
+LOCAL_FILES=()
+if [[ -d "$GATE_D" ]]; then
+  while IFS= read -r f; do [[ -n "$f" ]] && LOCAL_FILES+=("$f"); done \
+    < <(find "$GATE_D" -maxdepth 1 -name '*.sh' -type f | sort)
+fi
+if [[ ${#LOCAL_FILES[@]} -eq 0 ]]; then
+  ok "项目没有本地阶段（$GATE_D 不存在或没有 *.sh）"
+else
+  ok "发现 ${#LOCAL_FILES[@]} 个本地阶段，按文件名顺序跑"
+  for f in "${LOCAL_FILES[@]}"; do
+    # ⚠️ **可读性判断必须排在读取之前。** 反过来写的话，读不了的脚本会让
+    # sed 在 set -e + pipefail 下把整个门禁带走——退出码非零、汇总一行都不打印，
+    # 比静默跳过更糟：看不出是哪一步、也看不出别的阶段过没过。实测踩过。
+    if [[ ! -r "$f" ]]; then
+      head1 "$(basename "$f" .sh)"
+      bad "读不了 $f"
+      howto "检查该文件的读权限，或把它从 .claude/gate.d/ 拿掉。读不到不等于通过，本阶段按失败记。"
+      record "$(basename "$f" .sh)" FAIL
+      continue
+    fi
+    # 取阶段名。读得到才走到这里，但仍然兜一层——名字取不到不该让门禁失去汇总。
+    sname="$(sed -n 's/^# gate-stage:[[:space:]]*//p' "$f" 2>/dev/null | head -1 || true)"
+    [[ -n "$sname" ]] || sname="$(basename "$f" .sh)"
+    run_stage "$sname" bash "$f" "$ROOT"
+  done
 fi
 
 # ── 阶段 4：LKMM（内存序）───────────────────────────────
