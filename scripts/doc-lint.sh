@@ -10,6 +10,8 @@
 #   F. kb/*.md 里一个编号只许有一处定义位（rules/kb-discipline.md 第 5 条）
 #   G. kb/*.md 里编号的每一处引用都要带上简称，且与定义位逐字一致（同上）
 #
+# 装进项目的 SOP 副本（*/singlefs-ai-sop/*）不扫：它由上游自己的门禁管，
+# 在项目侧再扫一遍，只会让它的模板与项目 kb 的编号互相撞成假红。
 # 围栏代码块内的内容不检查（那是示例）。
 # 定义规则本身的文件加 <!-- doc-lint:rule-definition --> 跳过，并会显式报告为已跳过。
 
@@ -110,13 +112,15 @@ while IFS= read -r f; do
   else
     fails=$((fails+1))
   fi
-done < <(find "$ROOT" -name '*.md' -not -path '*/.git/*' -not -path '*/target/*' | sort)
+done < <(find "$ROOT" -name '*.md' -not -path '*/.git/*' -not -path '*/target/*' \
+                 -not -path '*/singlefs-ai-sop/*' | sort)
 
 # E. 引用了不存在的编号 —— 空白比错误更危险（rules/kb-discipline.md 第 3 条）
 #    典型形态：「历史版本」写了「补 I-4.4~I-4.7」，正文其实没补，别处还在引用它们。
 #    人通读能察觉，检索不会——它只会把那条引用端出来，模型照单全收。
 reffails=0
-kb_files="$(find "$ROOT" -path '*/kb/*.md' -not -path '*/.git/*' | sort)"
+kb_files="$(find "$ROOT" -path '*/kb/*.md' -not -path '*/.git/*' \
+                    -not -path '*/singlefs-ai-sop/*' | sort)"
 if [[ -n "$kb_files" ]]; then
   # 定义 = 表格行首的编号；引用 = 别的任何位置出现的编号。围栏代码块不算。
   defined="$(printf '%s\n' "$kb_files" | while IFS= read -r f; do
@@ -256,7 +260,15 @@ if [[ -n "$kb_files" ]]; then
     rel="${f#"$ROOT"/}"
     hits="$(awk -F'\037' -v FN="$rel" -v DEFS="$defsf" '
       function norm(s) { gsub(/[*`＿_ \t]/, "", s); return s }
-      BEGIN { FS = "\037"
+      function matchclose(s,   i, d, ch) {   # 返回与开头那个括号配对的闭括号位置
+        d = 0
+        for (i = 1; i <= length(s); i++) {
+          ch = substr(s, i, 1)
+          if (ch == "（" || ch == "(") d++
+          else if (ch == "）" || ch == ")") { d--; if (d == 0) return i }
+        }
+        return 0 }
+      BEGIN { FS = "\037"; ID = "[A-Z]+-?[0-9]+([.][0-9]+)?"
               while ((getline l < DEFS) > 0) {
                 split(l, d, "\037")
                 name[d[1]] = norm(d[2]); raw[d[1]] = d[2]
@@ -266,25 +278,27 @@ if [[ -n "$kb_files" ]]; then
       fence  { next }
       FNR in defline { next }
       {
-        line = $0
-        for (tok in name) {
-          p = 1
-          while ((q = index(substr(line, p), tok)) > 0) {
-            st = p + q - 1
-            before = (st > 1) ? substr(line, st - 1, 1) : ""
-            after  = substr(line, st + length(tok), 1)
-            p = st + length(tok)
-            if (before ~ /[A-Za-z0-9._-]/) continue
-            if (after  ~ /[A-Za-z0-9.]/)   continue
-            rest = substr(line, st + length(tok))
-            if (rest ~ /^[（(]/) {
-              split(rest, parts, /）|\)/)
-              inner = parts[1]; sub(/^[（(]/, "", inner)
-              if (norm(inner) != name[tok])
-                printf "%d\t名字不符\t%s\t写的是「%s」，定义处是「%s」\n", FNR, tok, inner, raw[tok]
-            } else {
-              printf "%d\t裸引用\t%s\t%s\n", FNR, tok, substr(line, 1, 60)
-            }
+        line = $0; pos = 1
+        # 从左到右单遍扫：按「每个编号各扫一遍整行」写的话，跳过简称内部只能在
+        # 同一个编号内生效，而简称里含的是**别的**编号（`E18（D5 …）`）。
+        while (match(substr(line, pos), ID)) {
+          st = pos + RSTART - 1
+          tok = substr(line, st, RLENGTH)
+          before = (st > 1) ? substr(line, st - 1, 1) : ""
+          after  = substr(line, st + length(tok), 1)
+          pos = st + length(tok)
+          if (before ~ /[A-Za-z0-9._-]/) continue
+          if (after  ~ /[A-Za-z0-9.]/)   continue
+          if (!(tok in name)) continue
+          rest = substr(line, st + length(tok))
+          if (rest ~ /^[（(]/) {
+            cl = matchclose(rest)          # 配对计数：简称本身可以含括号
+            inner = (cl > 2) ? substr(rest, 2, cl - 2) : ""
+            if (norm(inner) != name[tok])
+              printf "%d\t名字不符\t%s\t写的是「%s」，定义处是「%s」\n", FNR, tok, inner, raw[tok]
+            if (cl > 0) pos = st + length(tok) + cl
+          } else {
+            printf "%d\t裸引用\t%s\t%s\n", FNR, tok, substr(line, 1, 60)
           }
         }
       }
