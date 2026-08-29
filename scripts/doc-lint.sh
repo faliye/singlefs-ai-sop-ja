@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # 文档铁律的自动检查。rules/doc-discipline.md靠这个脚本强制，不靠自觉。
 #
-# 检查三条：
+# 检查七条：
 #   A. 正文（「## 历史版本」之前的部分）不许出现历史陈述与就地废弃标注
 #   B. CLAUDE.md 不许有「## 历史版本」节（历史外置）
 #   C. kb/*.md 必须有「## 历史版本」节收尾
 #   D. kb/*.md 正文不许出现上下文指代（检索会把单条端出来，指代当场断掉）
 #   E. kb/*.md 里引用的不变量编号（I-<类>.<号>）必须真的被某张表定义过
+#   F. kb/*.md 里一个编号只许有一处定义位（rules/kb-discipline.md 第 5 条）
+#   G. kb/*.md 里编号的每一处引用都要带上简称，且与定义位逐字一致（同上）
 #
 # 围栏代码块内的内容不检查（那是示例）。
 # 定义规则本身的文件加 <!-- doc-lint:rule-definition --> 跳过，并会显式报告为已跳过。
@@ -15,6 +17,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 ROOT="${1:-$(project_root)}"
 [[ -d "$ROOT" ]] || die "找不到项目根：$ROOT"
+
+tmpd="$(mktemp -d)"; trap 'rm -rf "$tmpd"' EXIT
 
 # 违规模式：正则 → 为什么违规
 PATTERNS=(
@@ -117,7 +121,7 @@ if [[ -n "$kb_files" ]]; then
   # 定义 = 表格行首的编号；引用 = 别的任何位置出现的编号。围栏代码块不算。
   defined="$(printf '%s\n' "$kb_files" | while IFS= read -r f; do
       awk '/^```/ { infence = !infence; next } !infence' "$f"
-    done | grep -oE '^\| *I-[0-9]+\.[0-9]+ *\|' | grep -oE 'I-[0-9]+\.[0-9]+' | sort -u)"
+    done | grep -oE '^\| *I-[0-9]+\.[0-9]+ *\|' | grep -oE 'I-[0-9]+\.[0-9]+' | sort -u || true)"
 
   while IFS= read -r f; do
     rel="${f#"$ROOT"/}"
@@ -140,9 +144,166 @@ if [[ -n "$kb_files" ]]; then
   done <<< "$kb_files"
 fi
 
+# F/G. 编号只能做索引，不能做称呼（rules/kb-discipline.md 第 5 条）
+#   定义位有且只有两种，且都必须是**显式**的。不从「表格首列是编号」去猜——
+#   实测过，首列同样被用来当行标签（`| D2 | 节点内 parity 与 D2 的… |`、
+#   `| I-6.1 | 补注：… |`），猜的话这些全是假红：
+#     1. 登记表：表格上方单独一行 <!-- doc-lint:registry name-col=N -->，
+#        该表每行首列的编号即定义位，简称取第 N 列（N 默认 2）
+#     2. 登记标题：以编号开头的标题，如 `## D1 数据可移动性 —— 已定`，
+#        简称取编号之后、「——」之前那一段
+#   其余每一次出现都算引用，必须写成 `D1（数据可移动性）`。
+#   F 查定义位唯一，G 查引用带简称且与定义位逐字一致。
+NAME_MAX=24     # 简称字符数上限。带不动的名字等于没名字，逼定义处起个短的。
+numfails=0
+if [[ -n "$kb_files" ]]; then
+  defsf="$tmpd/defs.tsv"
+  : > "$defsf"
+  while IFS= read -r f; do
+    awk -v FN="${f#"$ROOT"/}" '
+      BEGIN { ID = "[A-Z]+-?[0-9]+([.][0-9]+)?" }
+      /^```/ { fence = !fence; next }
+      fence  { next }
+      /<!-- *doc-lint:registry/ {
+        reg = 1; intable = 0; ncol = 2
+        if (match($0, /name-col=[0-9]+/)) ncol = substr($0, RSTART + 9, RLENGTH - 9) + 0
+        next }
+      reg && /^\|/ {
+        intable = 1
+        n = split($0, c, "|")
+        id = c[2]; gsub(/^[ \t]+|[ \t]+$/, "", id)
+        if (id ~ "^" ID "$" && n > ncol) {
+          nm = c[ncol + 1]; gsub(/^[ \t]+|[ \t]+$/, "", nm)
+          printf "%s\037%s\037%s\037%d\n", id, nm, FN, FNR }
+        next }
+      reg && intable { reg = 0; intable = 0 }
+      match($0, "^#+[ ]*" ID "([ \t]|$)") {
+        h = $0; sub(/^#+[ ]*/, "", h)
+        match(h, "^" ID); id = substr(h, 1, RLENGTH)
+        nm = substr(h, RLENGTH + 1)
+        gsub(/^[ \t]+|[ \t]+$/, "", nm); sub(/ *——.*$/, "", nm)
+        printf "%s\037%s\037%s\037%d\n", id, nm, FN, FNR }
+    ' "$f" >> "$defsf"
+  done <<< "$kb_files"
+
+  # F. 一个编号只许有一处定义位
+  while IFS= read -r id; do
+    [[ -z "$id" ]] && continue
+    bad "编号 $id 有多处定义位——一个编号只许有一处定义"
+    awk -F'\037' -v i="$id" '$1==i {printf "        %s:%s  简称「%s」\n", $3, $4, $2}' "$defsf"
+    howto "留一处当定义位，别处改成引用：写成「$id（简称）」并链过去。" \
+          "两处定义会各自漂移，而检索只端出一条、并且不告诉你它挑了哪条。"
+    numfails=$((numfails+1))
+  done < <(cut -d$'\037' -f1 "$defsf" | sort | uniq -d)
+
+  # F. 简称本身要能被带着走：不许为空，不许长到没人愿意在引用处写
+  while IFS=$'\037' read -r id nm df dl; do
+    [[ -z "$id" ]] && continue
+    nlen="$(printf '%s' "$nm" | awk '{print length($0)}')"
+    if [[ -z "$nm" ]]; then
+      bad "$df:$dl  编号 $id 的定义位没有简称"
+      howto "在登记表的简称列（或标题里编号之后）写一个短名，例：「## $id 反向索引 —— 已定」。" \
+            "没有简称的编号在引用处只剩一个符号，含义可以被悄悄改掉。"
+      numfails=$((numfails+1))
+    elif [[ "$nlen" -gt "$NAME_MAX" ]]; then
+      bad "$df:$dl  编号 $id 的简称 $nlen 字，超过 $NAME_MAX 字"
+      howto "起一个 $NAME_MAX 字以内的简称——引用处每次都要带着它，带不动的名字等于没名字。" \
+            "完整陈述留在定义位的其它列里，别塞进简称列。"
+      numfails=$((numfails+1))
+    fi
+  done < "$defsf"
+
+  # H. 反过来：编号形状的记号反复出现，却一处定义位都没有——那是拿编号当称呼在用
+  #    没有这一条，一个从没登记过的 kb 会全绿：定义位为空 ⇒ F、G 都无事可做，
+  #    而实测出事的那个 kb 正是一处登记都没有的（rules/kb-discipline.md 第 5 条）。
+  #    领域术语（RAID5、SHA256、Z3）形状上与编号分不开，靠显式声明摘出去，不靠猜。
+  ID_MIN=3        # 出现几次才算「在当称呼用」。一两次算顺带提及。
+  mapfile -t kb_arr <<< "$kb_files"
+  exemptf="$tmpd/exempt.txt"
+  cut -d$'\037' -f1 "$defsf" | sort -u > "$exemptf"
+  grep -hoE '<!-- *doc-lint:not-numbers[^>]*-->' "${kb_arr[@]}" 2>/dev/null \
+    | sed -E 's/<!-- *doc-lint:not-numbers//; s/-->//' | tr -s ' \t' '\n' \
+    | grep -v '^$' >> "$exemptf" || true
+  while IFS=$'\037' read -r tok cnt; do
+    [[ -z "$tok" ]] && continue
+    bad "编号 $tok 出现 $cnt 次，却没有任何定义位"
+    howto "在登记表（表上方加 <!-- doc-lint:registry name-col=2 -->）或标题里登记它并给个简称，" \
+          "然后每处引用写成「$tok（简称）」。它若根本不是编号而是领域术语，" \
+          "在任一 kb 文件里声明摘出去：<!-- doc-lint:not-numbers $tok -->"
+    numfails=$((numfails+1))
+  done < <(awk -v MIN="$ID_MIN" -v EXEMPT="$exemptf" '
+      BEGIN { ID = "[A-Z]+-?[0-9]+([.][0-9]+)?"
+              while ((getline l < EXEMPT) > 0) exempt[l] = 1
+              close(EXEMPT) }
+      /^```/ { fence = !fence; next }
+      fence  { next }
+      {
+        line = $0
+        while (match(line, ID)) {
+          tok = substr(line, RSTART, RLENGTH)
+          before = (RSTART > 1) ? substr(line, RSTART - 1, 1) : ""
+          line = substr(line, RSTART + RLENGTH)
+          if (before ~ /[A-Za-z0-9._-]/) continue
+          if (line ~ /^[A-Za-z]/) continue          # SHA256sum 这种，不是编号
+          if (!(tok in exempt)) n[tok]++
+        }
+      }
+      END { for (t in n) if (n[t] >= MIN) printf "%s\037%d\n", t, n[t] }
+    ' "${kb_arr[@]}" | sort)
+
+  # G. 引用处必须带简称，且与定义位逐字一致
+  while IFS= read -r f; do
+    rel="${f#"$ROOT"/}"
+    hits="$(awk -F'\037' -v FN="$rel" -v DEFS="$defsf" '
+      function norm(s) { gsub(/[*`＿_ \t]/, "", s); return s }
+      BEGIN { FS = "\037"
+              while ((getline l < DEFS) > 0) {
+                split(l, d, "\037")
+                name[d[1]] = norm(d[2]); raw[d[1]] = d[2]
+                if (d[3] == FN) defline[d[4]] = 1 }
+              close(DEFS) }
+      /^```/ { fence = !fence; next }
+      fence  { next }
+      FNR in defline { next }
+      {
+        line = $0
+        for (tok in name) {
+          p = 1
+          while ((q = index(substr(line, p), tok)) > 0) {
+            st = p + q - 1
+            before = (st > 1) ? substr(line, st - 1, 1) : ""
+            after  = substr(line, st + length(tok), 1)
+            p = st + length(tok)
+            if (before ~ /[A-Za-z0-9._-]/) continue
+            if (after  ~ /[A-Za-z0-9.]/)   continue
+            rest = substr(line, st + length(tok))
+            if (rest ~ /^[（(]/) {
+              split(rest, parts, /）|\)/)
+              inner = parts[1]; sub(/^[（(]/, "", inner)
+              if (norm(inner) != name[tok])
+                printf "%d\t名字不符\t%s\t写的是「%s」，定义处是「%s」\n", FNR, tok, inner, raw[tok]
+            } else {
+              printf "%d\t裸引用\t%s\t%s\n", FNR, tok, substr(line, 1, 60)
+            }
+          }
+        }
+      }
+    ' "$f")"
+    [[ -z "$hits" ]] && continue
+    n="$(printf '%s\n' "$hits" | wc -l)"
+    bad "$rel  $n 处编号引用没带简称或简称不符"
+    printf '%s\n' "$hits" | head -3 | awk -F'\t' '{printf "        :%s  %s %s —— %s\n", $1, $3, $2, $4}'
+    howto "每处引用都写成「编号（简称）」，简称照定义位逐字抄，例：「D1（数据可移动性）」。" \
+          "编号在引用处只剩一个符号，含义能被悄悄改掉而没有一个字看起来别扭——" \
+          "实测代价见 rules/kb-discipline.md 第 5 条。全量清单：DOC_LINT_VERBOSE=1"
+    [[ -n "${DOC_LINT_VERBOSE:-}" ]] && printf '%s\n' "$hits" | awk -F'\t' '{printf "        :%s  %s %s —— %s\n", $1, $3, $2, $4}'
+    numfails=$((numfails+1))
+  done <<< "$kb_files"
+fi
+
 say ""
-if [[ $fails -gt 0 || $reffails -gt 0 ]]; then
-  bad "文档铁律检查失败：$fails 个文件违规、$reffails 处编号引用无定义（检查 $checked，跳过 $skipped）"
+if [[ $fails -gt 0 || $reffails -gt 0 || $numfails -gt 0 ]]; then
+  bad "文档铁律检查失败：$fails 个文件违规、$reffails 处编号引用无定义、$numfails 处编号定义/引用不合规（检查 $checked，跳过 $skipped）"
   exit 1
 fi
 ok "文档铁律检查通过（检查 $checked，跳过 $skipped；DOC_LINT_VERBOSE=1 看全部）"
