@@ -82,6 +82,9 @@ fi
 
 # ── 阶段 0b：门禁自身（每条拒绝都要给出路）──────────────
 run_stage "门禁自检" bash "$SCRIPTS/gate-lint.sh"
+# 每条拒绝有没有出路是一回事，检查本身红不红得起来是另一回事。
+# 后者靠样本证明（rules/sop-first.md：没有自检能力的门禁是摆设）。
+run_stage "门禁判别力" bash "$SCRIPTS/selftest.sh"
 
 # ── 阶段 1：文档铁律 ────────────────────────────────────
 run_stage "文档铁律" bash "$SCRIPTS/doc-lint.sh" "$ROOT"

@@ -29,6 +29,14 @@
 | 路径数 | path count | 経路数 | 穷尽覆盖需要多少用例 |
 | 上下文指代 | dangling reference | 文脈依存の参照 | kb 里禁止的那类写法 |
 | 译本 | translation | 訳本 | 生成物，不是平行版本 |
+| 编号 | number | 番号 | 指代某条决策/不变量/欠检查的符号，如 D1、I-3.1 |
+| 简称 | short name | 簡称 | 编号的短名，引用处每次都要带着它 |
+| 登记位 | registration site | 登録箇所 | 编号唯一的说明处：登记表的一行，或带破折号的标题 |
+| 登记表 | registry table | 登録表 | 上方带 `doc-lint:registry` 标记的那张表 |
+| 登记标题 | registry heading | 登録見出し | `## D1 数据可移动性 —— 已定` 这种形态 |
+| 裸引用 | bare citation | 裸の引用 | 只写编号、不带简称的引用 |
+| 缩写 | abbreviation | 略語 | 函数名里不推荐用的那种；领域专名不算 |
+| 上下文约束 | context constraints | 文脈の制約 | 名字里带的前置条件与作用范围 |
 
 ## 三句核心表述
 

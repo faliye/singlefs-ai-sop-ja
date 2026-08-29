@@ -4,6 +4,13 @@
 
 set -euo pipefail
 
+# 字符数不许随 locale 变。C locale 下 awk 的 length() 按字节算，
+# 「24 字」当场变成 8 个汉字，而失败信息还理直气壮报「72 字」。
+for _loc in C.UTF-8 C.utf8 en_US.UTF-8; do
+  if locale -a 2>/dev/null | grep -qix "$_loc"; then export LC_ALL="$_loc"; break; fi
+done
+unset _loc
+
 if [[ -t 1 ]]; then
   C_RED=$'\033[31m'; C_GRN=$'\033[32m'; C_YEL=$'\033[33m'
   C_BLD=$'\033[1m'; C_RST=$'\033[0m'
@@ -12,6 +19,15 @@ else
 fi
 
 say()   { printf '%s\n' "$*"; }
+# awk 实现必须钉死。mawk 的 substr/length 按字节走，gawk 在 UTF-8 locale 下按字符走，
+# 同一份 kb 会得出不同判定——「本地可跑且与远端同判」当场失效（rules/show-me-test.md）。
+if ! awk --version 2>/dev/null | head -1 | grep -q GNU; then
+  printf '%s  ✗%s 需要 gawk：当前 awk 不是 GNU awk\n' "${C_RED:-}" "${C_RST:-}" >&2
+  printf '%s     → 怎么办：%s 装 gawk（Debian/Ubuntu: sudo apt install gawk），\n' "${C_YEL:-}" "${C_RST:-}" >&2
+  printf '                或把 PATH 里的 awk 指到 gawk。判定结果不许随 awk 实现变。\n' >&2
+  exit 1
+fi
+
 head1() { printf '\n%s══ %s ══%s\n' "$C_BLD" "$*" "$C_RST"; }
 ok()    { printf '%s  ✓%s %s\n' "$C_GRN" "$C_RST" "$*"; }
 bad()   { printf '%s  ✗%s %s\n' "$C_RED" "$C_RST" "$*"; }
