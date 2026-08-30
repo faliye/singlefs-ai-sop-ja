@@ -3,7 +3,7 @@ C commit-publish-nofence
 (*
  * commit-publish 的对照组：去掉屏障。
  *
- * 它存在的唯一目的是**证明上面那个测试有判别力**——
+ * 它存在的唯一目的是**证明 commit-publish.litmus 有判别力**——
  * 如果这一份也判 Never，说明这个模式本来就撞不上，
  * 那么 commit-publish 判 Never 就什么都没证明。
  *

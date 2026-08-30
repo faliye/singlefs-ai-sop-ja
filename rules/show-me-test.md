@@ -1,4 +1,4 @@
-<!-- generated-from: rules/show-me-test.md sha256:54e43829e867e75b67a6209da3211ac53af0b89ba1e6d0e3a93e1f137def5ef4 -->
+<!-- generated-from: rules/show-me-test.md sha256:d39ce4a53b52a1ef3a0624057e4e9e00514b1d1834eaf48f994e300fce4a70ff -->
 <!-- doc-lint:rule-definition -->
 # 受入の鉄則：Show me test
 
@@ -90,7 +90,7 @@
 >
 > ゲートが証明するのは根拠要件の充足であって、意味的な正しさではない。
 
-**これは冒頭の一文に対する必要な重しである。** これがないと「ゲートが全緑」が
+**これは題辞「Make every submitted patch review-worthy」に対する必要な重しである。** これがないと「ゲートが全緑」が
 「コードは正しい」と読まれてしまう。それこそ本プロジェクトが最も避けたい種類の
 静かな誤りである。
 
