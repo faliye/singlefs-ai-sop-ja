@@ -15,9 +15,14 @@
 #      才报 undeclared，那时已经很难定位。这里提前拦。
 #   2. init 块里给 atomic_t 形参赋初值不带类型 —— herd7 照跑且判定正确，
 #      只有 klitmus7 会炸。也就是说这个错能一路混过模型判定，必须在这里拦。
-#   3. 必须有 Never 和 Sometimes 两侧。全是 Never 说明没有对照组，
-#      分不清「屏障挡住了」还是「这个模式本来就撞不上」。
+#   3. 每条 Never 必须有**自己的**对照组：同名前缀 `<名>-*.litmus` 且声明 Sometimes。
+#      全局数出一条 Sometimes 不算数——对抗测试实测：10 条互不相关的 Never
+#      曾靠 1 条无关的 Sometimes 全部过闸，而「屏障挡住了」还是「本来就撞不上」
+#      对每一条都没被回答。
 #   4. 没有 herd7 直接失败，不静默跳过。
+#
+# 静态检查与配对检查排在 herd7 探测之前：它们不需要 herd7，
+# 该红的先红出来（selftest 的样本也靠这一点才喂得进去）。
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 ROOT="${1:-$(project_root)}"
@@ -25,6 +30,72 @@ LITMUS_DIR="$ROOT/litmus"
 KTREE="${SINGLEFS_KERNEL_TREE:-}"
 
 head1 "LKMM（herd7）"
+
+[[ -d "$LITMUS_DIR" ]] || { bad "没有 $LITMUS_DIR 目录"
+  howto "并发相关的改动要有 litmus：照 templates/litmus/ 那对现成的抄，" \
+        "放进 <项目根>/litmus/。没有并发改动就不该跑到这条检查。"; exit 1; }
+# 路径必须绝对化：下面要 cd 进内核树跑 herd7（模型文件是相对路径引的），
+# 相对路径 cd 之后就找不着了
+mapfile -t FILES < <(find "$LITMUS_DIR" -name '*.litmus' -exec readlink -f {} \; | sort)
+[[ ${#FILES[@]} -gt 0 ]] || { bad "$LITMUS_DIR 下没有 .litmus 文件"
+  howto "照 templates/litmus/ 那对现成的抄一对进来（Never + 去屏障的 Sometimes 对照），" \
+        "或者删掉空的 litmus/ 目录。"; exit 1; }
+
+# ── 静态检查：期望声明 / 寄存器声明 / atomic_t 初值类型 ──
+fails=0
+declare -A EXPECT
+for f in "${FILES[@]}"; do
+  rel="${f#"$ROOT"/}"
+  exp="$(sed -n 's/.*singlefs-expect:[[:space:]]*\([A-Za-z]*\).*/\1/p' "$f" | head -1)"
+  case "$exp" in
+    Never|Sometimes|Always) EXPECT["$f"]="$exp" ;;
+    *) bad "$rel 缺 (* singlefs-expect: Never|Sometimes *) 声明"
+       howto "在文件头注释块里写明期望判定。没有声明 = 跑了但没人看结果，不算验证。"
+       fails=$((fails+1)); continue ;;
+  esac
+  for r in $(grep -oE '\br[0-9]+\b' "$f" | sort -u); do
+    grep -qE "^[[:space:]]*int[[:space:]]+$r[[:space:]]*;" "$f" \
+      || { bad "$rel 用了 $r 但没有 'int $r;'（klitmus7 会在生成 C 之后才报）"
+           howto "在用到 $r 的进程体开头补一行 'int $r;'。"
+           fails=$((fails+1)); }
+  done
+  init="$(awk '/^\{/{f=1} f{print} f&&/\}/{exit}' "$f")"
+  for v in $(grep -oE 'atomic_t[[:space:]]*\*[[:space:]]*[A-Za-z_][A-Za-z0-9_]*' "$f" \
+             | sed -E 's/.*\*[[:space:]]*//' | sort -u); do
+    printf '%s\n' "$init" | grep -qE "(^|[^[:alnum:]_])$v[[:space:]]*=" || continue
+    printf '%s\n' "$init" | grep -qE "atomic_t[[:space:]]+$v[[:space:]]*=" \
+      || { bad "$rel init 里 '$v = ...' 要写成 'atomic_t $v = ...'（只有 klitmus7 会炸）"
+           howto "init 块里给 atomic_t 形参赋初值必须带类型，照 templates/litmus/ 的写法。"
+           fails=$((fails+1)); }
+  done
+done
+[[ $fails -eq 0 ]] || { bad "静态检查未过：$fails 项"; exit 1; }
+
+# ── 每条 Never 都要有自己的对照组 ──
+n_never=0; n_some=0
+for f in "${FILES[@]}"; do
+  [[ "${EXPECT[$f]}" == Never ]] && n_never=$((n_never+1))
+  [[ "${EXPECT[$f]}" == Sometimes ]] && n_some=$((n_some+1))
+done
+for f in "${FILES[@]}"; do
+  [[ "${EXPECT[$f]}" == Never ]] || continue
+  base="${f%.litmus}"
+  paired=0
+  for g in "${FILES[@]}"; do
+    [[ "$g" == "$base"-*.litmus && "${EXPECT[$g]}" == Sometimes ]] && { paired=1; break; }
+  done
+  if [[ $paired -eq 0 ]]; then
+    rel="${f#"$ROOT"/}"
+    bad "$rel  没有配对的对照组"
+    say "        全局有几条 Sometimes 不算数：对照必须是这一条去掉屏障的形态，"
+    say "        否则分不清「屏障挡住了」还是「这个模式本来就撞不上」。"
+    howto "复制 $(basename "$f") 为 $(basename "$base")-nofence.litmus，删掉里面的屏障" \
+          "（smp_wmb / smp_rmb 等），声明改成 (* singlefs-expect: Sometimes *)。" \
+          "它判 Sometimes，原来那条的 Never 才有判别力。"
+    fails=$((fails+1))
+  fi
+done
+[[ $fails -eq 0 ]] || { bad "对照组检查未过：$fails 项"; exit 1; }
 
 # ── herd7 ──
 if ! command -v herd7 >/dev/null 2>&1 && command -v opam >/dev/null 2>&1; then
@@ -66,50 +137,6 @@ KTREE="$(readlink -f "$KTREE")"
 ok "内核树 $KTREE"
 ok "herd7  $(herd7 -version 2>&1 | head -1)"
 
-[[ -d "$LITMUS_DIR" ]] || { bad "没有 $LITMUS_DIR 目录"; exit 1; }
-# 路径必须绝对化：下面要 cd 进内核树跑 herd7（模型文件是相对路径引的），
-# 相对路径 cd 之后就找不着了
-mapfile -t FILES < <(find "$LITMUS_DIR" -name '*.litmus' -exec readlink -f {} \; | sort)
-[[ ${#FILES[@]} -gt 0 ]] || { bad "$LITMUS_DIR 下没有 .litmus 文件"; exit 1; }
-
-# ── 静态检查：寄存器声明 / atomic_t 初值类型 / 期望声明 ──
-fails=0
-declare -A EXPECT
-for f in "${FILES[@]}"; do
-  rel="${f#"$ROOT"/}"
-  exp="$(sed -n 's/.*singlefs-expect:[[:space:]]*\([A-Za-z]*\).*/\1/p' "$f" | head -1)"
-  case "$exp" in
-    Never|Sometimes|Always) EXPECT["$f"]="$exp" ;;
-    *) bad "$rel 缺 (* singlefs-expect: Never|Sometimes *) 声明"; fails=$((fails+1)); continue ;;
-  esac
-  for r in $(grep -oE '\br[0-9]+\b' "$f" | sort -u); do
-    grep -qE "^[[:space:]]*int[[:space:]]+$r[[:space:]]*;" "$f" \
-      || { bad "$rel 用了 $r 但没有 'int $r;'（klitmus7 会在生成 C 之后才报）"; fails=$((fails+1)); }
-  done
-  init="$(awk '/^\{/{f=1} f{print} f&&/\}/{exit}' "$f")"
-  for v in $(grep -oE 'atomic_t[[:space:]]*\*[[:space:]]*[A-Za-z_][A-Za-z0-9_]*' "$f" \
-             | sed -E 's/.*\*[[:space:]]*//' | sort -u); do
-    printf '%s\n' "$init" | grep -qE "(^|[^[:alnum:]_])$v[[:space:]]*=" || continue
-    printf '%s\n' "$init" | grep -qE "atomic_t[[:space:]]+$v[[:space:]]*=" \
-      || { bad "$rel init 里 '$v = ...' 要写成 'atomic_t $v = ...'（只有 klitmus7 会炸）"; fails=$((fails+1)); }
-  done
-done
-[[ $fails -eq 0 ]] || { bad "静态检查未过：$fails 项"; exit 1; }
-
-# ── 必须有对照组 ──
-n_never=0; n_some=0
-for f in "${FILES[@]}"; do
-  [[ "${EXPECT[$f]}" == Never ]] && n_never=$((n_never+1))
-  [[ "${EXPECT[$f]}" == Sometimes ]] && n_some=$((n_some+1))
-done
-if [[ $n_never -gt 0 && $n_some -eq 0 ]]; then
-  bad "只有 Never 没有 Sometimes —— 缺对照组"
-  say "        没有对照组就分不清「屏障挡住了」还是「这个模式本来就撞不上」"
-  howto "复制那份 Never 的 litmus，删掉里面的屏障（smp_wmb / smp_rmb 等），" \
-        "把声明改成 Sometimes。它判 Sometimes 才说明原来那条有判别力。"
-  exit 1
-fi
-
 # ── 跑 ──
 say ""
 cd "$KTREE/tools/memory-model"
@@ -132,7 +159,7 @@ for f in "${FILES[@]}"; do
     ok "$rel  $got（符合声明）"
   else
     bad "$rel  期望 $want，实际 $got"
-    printf '%s\n' "$out" | grep -E '^(States|Condition|Observation)' | sed 's/^/        /'
+    printf '%s\n' "$out" | grep -E '^(States|Condition|Observation)' | sed 's/^/        /' || true
     howto "两种可能，别急着改声明：" \
       "① 代码或模型真的少了屏障 → 这正是这条测试要抓的东西，去补屏障" \
       "② 这条声明本来就写错了   → 改 (* singlefs-expect: ... *)" \
@@ -143,4 +170,4 @@ done
 
 say ""
 [[ $fails -eq 0 ]] || { bad "LKMM 未通过：$fails 项"; exit 1; }
-ok "LKMM 通过（$n_never 条 Never + $n_some 条对照 Sometimes）"
+ok "LKMM 通过（$n_never 条 Never，每条都有配对对照；共 $n_some 条 Sometimes）"

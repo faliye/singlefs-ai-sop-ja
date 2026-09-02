@@ -20,7 +20,8 @@ record() { STAGES+=("$1"); RESULTS+=("$2"); }
 run_stage() { # run_stage <名称> <命令...>
   local name="$1"; shift
   head1 "$name"
-  if "$@"; then record "$name" PASS; else record "$name" FAIL; fi
+  # GATE_IN_STAGE：告诉子脚本标题已经打过了，别再打同名的一遍
+  if GATE_IN_STAGE=1 "$@"; then record "$name" PASS; else record "$name" FAIL; fi
 }
 
 # ── 阶段 0：规范版本一致性 ───────────────────────────────
@@ -90,55 +91,14 @@ run_stage "门禁判别力" bash "$SCRIPTS/selftest.sh"
 run_stage "文档铁律" bash "$SCRIPTS/doc-lint.sh" "$ROOT"
 
 # ── 阶段 2：Show me test ────────────────────────────────
+# 判定逻辑住在 show-me-test.sh（selftest 拿样本仓单独喂它）。退出码 3 = 无对象可判。
 head1 "Show me test"
-BASE="$(diff_base "$ROOT")"
-say "  diff 基准：$BASE"
-files="$(changed_files "$ROOT" "$BASE")"
-
-if [[ -z "$files" ]]; then
-  # 无变更既不是通过也不是失败——没有可判的对象。判成失败会让「刚装完就有一格红」
-  # 成为常态，而红色一旦成为常态就不再是信号，人会开始习惯性忽略它。
-  warn "工作区与基准无差异 —— 本阶段无对象可判（这不是通过）"
-  NOT_RUN+=("Show me test        本次无对象可判：工作区与 $BASE 无差异。改动之后再跑，或指定基准： GATE_BASE=<ref> bash .claude/scripts/gate.sh")
-else
-  code_changed="$(printf '%s\n' "$files" | grep -E '^crates/.*/src/.*\.rs$' || true)"
-  test_files="$(printf '%s\n' "$files" | grep -E '(^|/)(tests|benches|fuzz)/' || true)"
-  TEST_RE='#\[test\]|#\[cfg\(test\)\]|proptest!|#\[kani|#\[tokio::test\]'
-  test_lines="$(added_lines "$ROOT" "$BASE" | grep -E "$TEST_RE" || true)"
-  # 新建的未跟踪文件在 diff 里看不见，内联测试会被漏掉——直接扫文件内容。
-  # 对刚起步的项目，新文件是常态，漏掉等于这条门禁形同虚设。
-  untracked_tests=""
-  while IFS= read -r uf; do
-    [[ -f "$ROOT/$uf" ]] || continue
-    if grep -qE "$TEST_RE" "$ROOT/$uf"; then untracked_tests+="$uf"$'\n'; fi
-  done < <(git -C "$ROOT" ls-files --others --exclude-standard -- '*.rs' 2>/dev/null || true)
-  test_lines="$test_lines$untracked_tests"
-
-  if [[ -z "$code_changed" ]]; then
-    ok "无 crates/*/src 改动（仅文档/脚本），本阶段不适用"
-    record "Show me test" PASS
-  elif [[ -n "$test_files" || -n "$test_lines" ]]; then
-    ok "代码改动伴随测试改动"
-    [[ -n "$test_files" ]] && printf '%s\n' "$test_files" | sed 's/^/        测试文件: /'
-    [[ -n "$test_lines" ]] && say "        新增测试标注 $(printf '%s\n' "$test_lines" | wc -l) 处"
-    warn "脚本只能验证「有测试」，验证不了「测试会红」——"
-    warn "  按 rules/show-me-test.md，请在 commit message 写明你是怎么确认它会红的"
-    record "Show me test" PASS
-  else
-    bad "改了 crates/*/src 但没有任何测试改动，按 rules/show-me-test.md 拒收："
-    printf '%s\n' "$code_changed" | sed 's/^/        /'
-    howto "给这次改动补测试。不确定怎么测的话，按改动类型对号入座：" \
-      "纯函数 / 数据结构   → 同文件里加 #[cfg(test)] mod tests，最省事" \
-      "涉及并发或内存序    → litmus/ 下加一对 .litmus（Never + 去掉屏障的对照组）," \
-      "                      照着现有的抄，跑 bash .claude/scripts/lkmm.sh" \
-      "涉及磁盘格式        → 先在 kb/invariants.md 加一条不变量，再让 checker 实现它" \
-      "涉及崩溃恢复        → 见 crash-test skill；这条还没有 harness，说明情况即可" \
-      "" \
-      "写完把被测代码改坏一次，确认测试真的变红，再改回来——" \
-      "并在 commit message 里写明你是怎么确认的。"
-    record "Show me test" FAIL
-  fi
-fi
+smt_rc=0; GATE_IN_STAGE=1 bash "$SCRIPTS/show-me-test.sh" "$ROOT" || smt_rc=$?
+case "$smt_rc" in
+  0) record "Show me test" PASS ;;
+  3) NOT_RUN+=("Show me test        本次无对象可判：工作区与基准无差异。改动之后再跑，或指定基准： GATE_BASE=<ref> bash .claude/scripts/gate.sh") ;;
+  *) record "Show me test" FAIL ;;
+esac
 
 # ── 阶段 3：构建与单测 ──────────────────────────────────
 if [[ ! -f "$ROOT/Cargo.toml" ]]; then
@@ -168,6 +128,11 @@ if [[ -d "$SCRIPTS/../rules" && -f "$SCRIPTS/manifest.sh" ]]; then
   # 判据：被门禁的这个 ROOT 是不是 SOP 仓本身。
   if [[ -f "$SCRIPTS/../I18N" && "$(cd "$ROOT" && pwd)" == "$(cd "$SCRIPTS/.." && pwd)" ]]; then
     run_stage "三语同步" bash "$SCRIPTS/i18n-sync.sh"
+  fi
+  # 版本纪律同理只判 SOP 仓自身：改了规范本体就必须抬 VERSION——
+  # 以前这条只是 CLAUDE.md 里的提醒句，拦不住（对抗测试实测）。
+  if [[ "$(cd "$ROOT" && pwd)" == "$(cd "$SCRIPTS/.." && pwd)" ]]; then
+    run_stage "版本纪律" bash "$SCRIPTS/version-discipline.sh" "$ROOT"
   fi
 fi
 
@@ -239,6 +204,7 @@ for i in "${!STAGES[@]}"; do
   if [[ "${RESULTS[$i]}" == PASS ]]; then ok "${STAGES[$i]}"
   else bad "${STAGES[$i]}"; failed=$((failed+1)); fi
 done
+[[ $failed -eq 0 ]] || howto "红色阶段的细节与出路在上方对应段落里，按那里的「怎么办」执行，修完重跑。"
 
 if [[ ${#NOT_RUN[@]} -gt 0 ]]; then
   printf '\n%s本次未跑的阶段：%s\n' "$C_YEL" "$C_RST"

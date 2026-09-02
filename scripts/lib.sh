@@ -63,7 +63,15 @@ diff_base() {
     if git -C "$root" rev-parse --verify -q "$def" >/dev/null; then
       local mb
       if mb="$(git -C "$root" merge-base HEAD "$def" 2>/dev/null)" && [[ -n "$mb" ]]; then
-        # 若当前就在默认分支上，merge-base 等于 HEAD，退化为看工作区
+        # 当前就在默认分支上时 merge-base 等于 HEAD。以前退化为只看工作区——
+        # 于是「先 commit 再跑门禁」= 无对象可判，无测试的改动就这么溜进 master
+        # （对抗测试实测）。所以退到 HEAD~1，把最新那个 commit 一并纳入判定。
+        if [[ "$mb" == "$(git -C "$root" rev-parse HEAD 2>/dev/null)" ]]; then
+          local p1
+          if p1="$(git -C "$root" rev-parse -q --verify HEAD~1 2>/dev/null)"; then
+            printf '%s' "$p1"; return 0
+          fi
+        fi
         printf '%s' "$mb"; return 0
       fi
     fi

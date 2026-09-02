@@ -7,8 +7,10 @@
 #   i18n-sync.sh --update [目录]           把共享部分原样复制到各语言仓
 #   i18n-sync.sh --stamp <语言> <篇>...    给已重译好的那几篇盖上溯源标记
 #
-# --stamp 要求把篇目一个个写出来，不提供「全部盖章」：
-# 一条能把所有篇目刷绿的命令，等于把逐篇溯源这道检查关掉。
+# --stamp 要求把篇目一个个写出来，不提供「全部盖章」。
+# 说清楚它的边界：一个 for 循环照样能把所有篇目刷绿（对抗测试实测），
+# 盖章本质上是盖的人的承诺，这里只抬高「顺手全刷」的成本、并逼你把篇目名打一遍。
+# 机器管不了「真的重译了没」——所以盖完的 warn 不是客套，是这道检查的全部余量。
 #
 # 检查什么：对 LANGUAGES 里声明的每种语言，
 #   1. 那个语言的仓在不在  —— 不在则「无法检查」，按失败处理，不静默放过
@@ -43,9 +45,12 @@ MF="$PKG/MANIFEST.sha256"
 CF="$PKG/I18N"
 
 # 原样复制到各语言仓的部分：脚本与骨架不翻译，翻译的只有文本（清单里那几篇）。
-SHARED=(install.sh scripts skills templates)
+# GLOSSARY.md 本身就是三语一张表（术语表开头写明「三语共用」），所以走复制不走翻译——
+# 以前它两边都不在，跨语言漂移全绿（对抗测试实测）。
+SHARED=(install.sh scripts skills templates GLOSSARY.md)
 
-head1 "三语同步"
+# gate.sh 当阶段跑时它已打过同名标题，别打两遍（GATE_IN_STAGE 由 run_stage 设）
+[[ -n "${GATE_IN_STAGE:-}" ]] || head1 "三语同步"
 
 [[ -f "$CF" ]] || { ok "未声明语言族，本阶段不适用"; exit 0; }
 FAMILY="$(sed -n 's/^family=//p' "$CF")"
@@ -62,6 +67,16 @@ if [[ "$THIS" != "$REF" ]]; then
 fi
 [[ -f "$MF" ]] || { bad "缺 MANIFEST.sha256"; howto "跑： bash scripts/manifest.sh --update"; exit 1; }
 
+# 清单必须是新鲜的：本脚本所有对账都以 MANIFEST 为基准，清单陈旧时
+# 「译文与清单一致」是对着旧账本回声——实测出过「规则改了、清单没更新、
+# 三语同步照样全绿」的假绿。先让 manifest.sh 验一遍，陈旧即无法判定。
+if [[ -z "$STAMP_LANG" ]] && ! GATE_IN_STAGE=1 bash "$(dirname "${BASH_SOURCE[0]}")/manifest.sh" >/dev/null 2>&1; then
+  bad "MANIFEST.sha256 陈旧，译文新旧无法判定"
+  howto "先跑 bash scripts/manifest.sh 看哪几篇对不上，改完跑 --update 刷新清单，" \
+        "再回来跑三语同步。对着陈旧清单对账，绿的没有意义。"
+  exit 1
+fi
+
 if [[ -n "$STAMP_LANG" ]]; then
   head1 "盖溯源标记（$STAMP_LANG）"
   [[ ${#STAMP_FILES[@]} -gt 0 ]] || { bad "--stamp 没给篇目"
@@ -70,8 +85,8 @@ if [[ -n "$STAMP_LANG" ]]; then
           "没有「全部盖章」这条路——那等于把逐篇溯源这道检查关掉。"; exit 1; }
   repo="$ROOT/$FAMILY-$STAMP_LANG"
   [[ -d "$repo/.git" ]] || { bad "$STAMP_LANG  找不到 git 仓 $repo"
-    howto "只往 git 仓里写——写错地方无从回退。确认语言代号，或指定目录：" \
-          "bash scripts/i18n-sync.sh --stamp $STAMP_LANG <篇>... /path/to/repos"; exit 1; }
+    howto "只往 git 仓里写——写错地方无从回退。确认语言代号没拼错，" \
+          "并把该语言仓 clone 成本仓的兄弟目录（--stamp 只认兄弟目录，不收路径参数）。"; exit 1; }
   for path in "${STAMP_FILES[@]}"; do
     hash="$(awk -v p="$path" '$2==p {print $1}' "$MF")"
     [[ -n "$hash" ]] || { bad "$path 不在 MANIFEST.sha256 里"
@@ -112,7 +127,10 @@ for lang in $LANGS; do
   fi
   if ! diff -q "$MF" "$sm" >/dev/null 2>&1; then
     bad "$lang  落后：与清单不一致"
-    diff "$MF" "$sm" | grep '^<' | awk '{print $3}' | sed 's/^/        待重译: /' | head -10
+    # ⚠️ 尾部 || true 不能省：diff 有差异时退出码是 1，set -e + pipefail 会把整个
+    # 脚本在这里带走——howto 打不出来、后面的语言也不查了（对抗测试实测，
+    # 崩在真实数据上）。诊断管道只活在失败分支里，正是样本从没跑过的那条路。
+    diff "$MF" "$sm" | grep '^<' | awk '{print $3}' | sed 's/^/        待重译: /' | head -10 || true
     howto "把上面这几篇在该语言仓里改到位，然后把本仓的 MANIFEST.sha256 抄成它的 SOURCE-MANIFEST.sha256。" \
           "只抄清单不重译拦得住：下一项逐篇比对译文首行的 generated-from 哈希。"
     fails=$((fails+1)); continue
@@ -148,7 +166,8 @@ for lang in $LANGS; do
   if [[ -n "$sdiff" ]]; then
     bad "$lang  共享部分与本仓不一致：$sdiff"
     for item in $sdiff; do
-      diff -rq "$PKG/$item" "$repo/$item" 2>&1 | sed 's/^/        /' | head -4
+      # || true 同上：diff 非零 + pipefail 会把脚本带走，howto 全丢
+      diff -rq "$PKG/$item" "$repo/$item" 2>&1 | sed 's/^/        /' | head -4 || true
     done
     howto "共享部分是原样复制过去的，不翻译。一条命令同步全部语言：" \
           "bash scripts/i18n-sync.sh --update" \

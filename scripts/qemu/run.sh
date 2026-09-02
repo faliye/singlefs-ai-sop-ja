@@ -88,14 +88,23 @@ if [[ $SELFTEST -eq 1 ]]; then
   printf '#!/bin/sh\nexit 0\n' > "$tmp/ok.sh";   chmod +x "$tmp/ok.sh"
   printf '#!/bin/sh\nexit 7\n' > "$tmp/bad.sh";  chmod +x "$tmp/bad.sh"
   fail=0
-  got_ok="$(run_one "$tmp/ok.sh" "$KERNEL")"   || { bad "成功用例：读不到退出标记"; fail=1; got_ok=NA; }
-  got_bad="$(run_one "$tmp/bad.sh" "$KERNEL")" || { bad "失败用例：读不到退出标记"; fail=1; got_bad=NA; }
-  [[ "$got_ok" == 0 ]] && ok "成功用例 → 退出码 0" || { bad "成功用例 → $got_ok，期望 0"; fail=1; }
+  got_ok="$(run_one "$tmp/ok.sh" "$KERNEL")"   || { bad "成功用例：读不到退出标记"
+    howto "看串口日志找原因： tail -50 $QEMU_LOG（常见：内核路径不对、/dev/kvm 不可用）"
+    fail=$((fail+1)); got_ok=NA; }
+  got_bad="$(run_one "$tmp/bad.sh" "$KERNEL")" || { bad "失败用例：读不到退出标记"
+    howto "看串口日志找原因： tail -50 $QEMU_LOG（常见：内核路径不对、/dev/kvm 不可用）"
+    fail=$((fail+1)); got_bad=NA; }
+  [[ "$got_ok" == 0 ]] && ok "成功用例 → 退出码 0" || { bad "成功用例 → $got_ok，期望 0"
+    howto "退出码没如实传回宿主。看 $QEMU_LOG 尾部，多半是 init 脚本或串口配置的问题。"
+    fail=$((fail+1)); }
   [[ "$got_bad" == 7 ]] && ok "失败用例 → 退出码 7（harness 认得出失败）" \
-                        || { bad "失败用例 → $got_bad，期望 7 —— harness 会把失败当成成功"; fail=1; }
+                        || { bad "失败用例 → $got_bad，期望 7 —— harness 会把失败当成成功"
+    howto "这个 harness 现在不可信，先别拿它跑任何压测。看 $QEMU_LOG 排查退出码传递，" \
+          "修好后重跑 --selftest，两个用例都如实分辨了才算好。"
+    fail=$((fail+1)); }
   rm -rf "$tmp"
   say ""
-  [[ $fail -eq 0 ]] || { bad "harness 自检未通过"; exit 1; }
+  [[ $fail -eq 0 ]] || { bad "harness 自检未通过：$fail 项"; exit 1; }
   ok "harness 自检通过：退出码能如实传回宿主"
   exit 0
 fi
@@ -117,5 +126,13 @@ if [[ -z "$PAYLOAD" ]]; then
 fi
 
 [[ -x "$PAYLOAD" ]] || die "payload 不可执行：$PAYLOAD"
-rc="$(run_one "$PAYLOAD" "$KERNEL")" || { bad "读不到退出标记，判定不明，整轮作废"; tail -20 "$QEMU_LOG" | sed 's/^/        /'; exit 1; }
-if [[ "$rc" == 0 ]]; then ok "payload 退出码 0"; else bad "payload 退出码 $rc"; tail -20 "$QEMU_LOG" | sed 's/^/        /'; exit 1; fi
+rc="$(run_one "$PAYLOAD" "$KERNEL")" || { bad "读不到退出标记，判定不明，整轮作废"
+  tail -20 "$QEMU_LOG" | sed 's/^/        /'
+  howto "上面是串口日志尾部。判定不明不能当成失败也不能当成成功，" \
+        "先跑 --selftest 确认 harness 本身没坏，再重跑这轮。"; exit 1; }
+if [[ "$rc" == 0 ]]; then ok "payload 退出码 0"; else
+  bad "payload 退出码 $rc"
+  tail -20 "$QEMU_LOG" | sed 's/^/        /'
+  howto "payload 在虚机里失败了。上面是串口日志尾部，按 payload 自己的输出排查。"
+  exit 1
+fi

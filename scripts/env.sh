@@ -11,7 +11,10 @@ req() { # req <命令> <说明> <是否必须:hard|soft>
     ver="$("$cmd" --version 2>/dev/null | head -1 || true)"
     ok "$cmd${ver:+  ($ver)}"
   else
-    if [[ "$level" == hard ]]; then bad "$cmd 缺失 —— $desc"; missing=$((missing+1))
+    if [[ "$level" == hard ]]; then
+      bad "$cmd 缺失"
+      howto "$desc"
+      missing=$((missing+1))
     else warn "$cmd 缺失 —— $desc（非阻塞）"; fi
   fi
 }

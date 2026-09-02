@@ -29,6 +29,7 @@
 | 文件 | 内容 |
 |---|---|
 | `.claude/kb/decisions.md` | 设计决策：定了什么、为什么、还没定什么 |
+| `.claude/kb/experiments.md` | 实验记录：问题、先写死的判据、对照与变异、复跑命令 |
 | `.claude/kb/invariants.md` | 不变量清单，checker 是它的可执行形式 |
 | `.claude/kb/prior-art.md` | 他家方案调研，含来源与口径 |
 | `.claude/kb/pitfalls.md` | 避坑清单，每做设计决定回来对一遍 |

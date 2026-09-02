@@ -46,7 +46,9 @@ if diff <(gen) "$MF" >/dev/null 2>&1; then
 fi
 
 bad "MANIFEST.sha256 与 CLAUDE.md + rules/ 不一致"
-diff <(gen) "$MF" | grep -E '^[<>]' | sed 's/^/        /' | head -20
+# || true 不能省：diff 有差异时退出码 1 + pipefail 会把脚本在这里带走，
+# 下面的 howto 打不出来（对抗测试实测，崩在真实数据上）
+diff <(gen) "$MF" | grep -E '^[<>]' | sed 's/^/        /' | head -20 || true
 howto "改了规范正文或规则就要更新清单，否则各语言译文无从知道自己过期了：" \
       "bash scripts/manifest.sh --update" \
       "" \

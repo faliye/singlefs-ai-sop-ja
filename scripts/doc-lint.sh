@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # 文档铁律的自动检查。rules/doc-discipline.md靠这个脚本强制，不靠自觉。
 #
-# 检查八条：
+# 检查十条：
 #   A. 正文（「## 历史版本」之前的部分）不许出现历史陈述与就地废弃标注
-#   B. CLAUDE.md 不许有「## 历史版本」节（历史外置）
+#   A2. 围栏必须配对；「## 历史版本」之后不许再开 ## 级小节——
+#       两者任一成立时，其后内容都躲开了全部扫描（对抗测试实测）
+#   B. CLAUDE.md 与 rules/*.md 不许有「## 历史版本」节（历史外置）
 #   C. kb/*.md 必须有「## 历史版本」节收尾
 #   D. kb/*.md 正文不许出现上下文指代、方位指代与自指称呼（检索把单条端出来时，
 #      「上文」「下面」「此处」一起断掉；rules/kb-discipline.md 第 1 条）
@@ -67,14 +69,57 @@ head1 "文档铁律检查"
 
 while IFS= read -r f; do
   rel="${f#"$ROOT"/}"
-  # 标记必须独占一行且在文件头 5 行内——否则正文里"提到"这个字符串会被误判为跳过
-  if head -5 "$f" | grep -qx '<!-- doc-lint:rule-definition -->'; then
-    [[ -n "${DOC_LINT_VERBOSE:-}" ]] && warn "跳过 $rel（规则定义文件）"
+  # CHANGELOG 是规则指定的历史存放处（design-doc-discipline：历史外置到 CHANGELOG.md）——
+  # 它整个文件就是历史，拿「正文不许历史陈述」去扫它是范畴错误。
+  if [[ "$(basename "$f")" == "CHANGELOG.md" ]]; then
+    [[ -n "${DOC_LINT_VERBOSE:-}" ]] && warn "跳过 $rel（历史文件）"
     skipped=$((skipped+1)); continue
+  fi
+  # 标记必须独占一行且在文件头 5 行内——否则正文里"提到"这个字符串会被误判为跳过。
+  # 且只许出现在规则本体的位置：别处（尤其 kb）贴这张免检牌，
+  # 等于一行注释把整个文件的检查关掉（对抗测试实测）。
+  if head -5 "$f" | grep -qx '<!-- doc-lint:rule-definition -->'; then
+    case "$f" in
+      # kb 分支必须排在白名单前面：kb/rules/x.md 这种嵌套路径否则会先匹配上
+      # */rules/*.md 白名单溜掉（对抗测试实测）
+      */kb/*)
+        bad "$rel  rule-definition 标记不许出现在 kb 里"
+        howto "删掉文件头的 <!-- doc-lint:rule-definition -->。kb 是给模型检索的内容，" \
+              "必须受检；规则定义住在 rules/，不住在 kb（rules/doc-discipline.md）。"
+        checked=$((checked+1)); fails=$((fails+1)); continue ;;
+      */CLAUDE.md|*/rules/*.md|*/skills/*/SKILL.md)
+        [[ -n "${DOC_LINT_VERBOSE:-}" ]] && warn "跳过 $rel（规则定义文件）"
+        skipped=$((skipped+1)); continue ;;
+      *)
+        bad "$rel  rule-definition 标记只许用于 CLAUDE.md、rules/、skills/*/SKILL.md"
+        howto "删掉文件头的 <!-- doc-lint:rule-definition -->——这份文件不是规则定义，" \
+              "内容就该受检。要引用规则，链到 rules/ 对应文件。"
+        checked=$((checked+1)); fails=$((fails+1)); continue ;;
+    esac
   fi
   checked=$((checked+1))
   body="$(body_of "$f")"
   filefail=0
+
+  # 围栏必须配对：一行落单的 ``` 让其后全文被当代码块跳过——
+  # 所有检查一起失明，而这个错误极易无意犯出（对抗测试实测）。
+  nfence="$(grep -cE '^[ \t]*```' "$f")" || true
+  if (( nfence % 2 )); then
+    bad "$rel  围栏代码块未闭合（\`\`\` 共 $nfence 处，奇数）"
+    howto "找到落单的那行 \`\`\` 补上闭合。围栏没配对时，其后全文不受任何检查。"
+    filefail=1
+  fi
+
+  # 「## 历史版本」必须是文末最后一节：它之后再开新节，
+  # 新内容就躲开了正文检查——正文扫描在第一处历史节停机（对抗测试实测）。
+  afterhist="$(awk '/^[ \t]*```/{fence=!fence;next} fence{next}
+                    /^## 历史版本[[:space:]]*$/{h=1;next} h&&/^## /{print FNR}' "$f")"
+  if [[ -n "$afterhist" ]]; then
+    bad "$rel  「## 历史版本」之后又出现了 ## 级小节（行 $(printf '%s' "$afterhist" | tr '\n' ' ' | sed 's/ $//')）"
+    howto "历史版本只能是最后一节。新内容写回正文（历史节之前）；" \
+          "第二个历史节与第一个合并。"
+    filefail=1
+  fi
 
   i=0
   while [[ $i -lt ${#PATTERNS[@]} ]]; do
@@ -103,7 +148,9 @@ while IFS= read -r f; do
     # 方位指代（见下 / 见上表 / 上面那张表）与上下文指代同一个病：检索结果里没有上下。
     # 「上一条」「下一条」**不在其内**——实测假红压倒真红：一个已登记的简称就叫
     # 「上一条时间线的残留」，还有「记下一条自评」「装得下一条记录」这类动宾。
-    ctx='如上所述|如前所述|同上|见上文|见上面|前面提到|上一节|前述|下面会说|后面会说'
+    # 「同上」要认边界：左排除构词（协同/合同/不同），右排除「同上游/同上层」——
+    # 「哈希口径同上游清单」是正常句子，不排除就是假红（对抗测试实测）。
+    ctx='如上所述|如前所述|(^|[^协合不])同上([^游层级线]|$)|见上文|见上面|前面提到|上一节|前述|下面会说|后面会说'
     ctx="$ctx"'|见[上下](表|文|节|条|图|面|$|[，。；：、）」])|[如照][上下](表|图)|上面[那这]|下面[那这]'
     if refs="$(printf '%s\n' "$body" | grep -nE "$ctx" || true)"; [[ -n "$refs" ]]; then
       while IFS= read -r r; do
@@ -116,7 +163,12 @@ while IFS= read -r f; do
         filefail=1
       done <<< "$refs"
     fi
-    self='[本该](决策|实验([^室]|$)|不变量|章节|表)|[本该]条([^件目]|$)|[本该]节([^点]|$)|[本该]文件([^夹]|$)|[本该]文档|这(条|个)(决策|实验|不变量)'
+    # 首字排除与尾字排除同一个理由（实测假红压倒真红）：「脚本文件」「副本文件」
+    # 「成本表」里的「本」是构词，不是自指；「应该文件化」里的「该」同理。
+    ben='(^|[^脚副样文版译抄剧根基成日资蓝范母拓孤标课])本'
+    gai='(^|[^应活])该'
+    tails='(决策|不变量|章节|文档|表|实验([^室]|$)|条([^件目]|$)|节([^点]|$)|文件([^夹]|$))'
+    self="$ben$tails|$gai$tails|这(条|个)(决策|实验|不变量)"
     if selfs="$(printf '%s\n' "$body" | grep -nE "$self" || true)"; [[ -n "$selfs" ]]; then
       while IFS= read -r r; do
         rln="$(printf '%s' "$r" | sed 's/^[0-9]*://; s/\t.*//')"
@@ -132,12 +184,23 @@ while IFS= read -r f; do
   fi
 
   base="$(basename "$f")"
-  has_hist=0; grep -q '^## 历史版本[[:space:]]*$' "$f" && has_hist=1
+  # 认围栏：design-doc-discipline 的示例块里就有一行「## 历史版本」，围栏里的不算数
+  has_hist="$(awk '/^[ \t]*```/{fence=!fence;next} fence{next}
+                   /^## 历史版本[[:space:]]*$/{print 1; exit}' "$f")"
+  [[ -n "$has_hist" ]] || has_hist=0
 
   if [[ "$base" == "CLAUDE.md" && $has_hist -eq 1 ]]; then
     bad "$rel  CLAUDE.md 不许有「## 历史版本」节，历史外置到 kb/ 或 CHANGELOG.md"
     howto "把这一节整段挪到 CHANGELOG.md 或 kb/。CLAUDE.md 每次开工都要通读，" \
           "混进历史会稀释它（rules/doc-discipline.md）。"
+    filefail=1
+  fi
+  # rules 与 CLAUDE.md 同律：连文末历史节都不留（rules/design-doc-discipline.md）。
+  # 以前只查 CLAUDE.md，rules 文件留历史节不红（对抗测试实测）。
+  if [[ "$f" == */rules/*.md && $has_hist -eq 1 ]]; then
+    bad "$rel  rules 文件连文末「## 历史版本」都不留，历史外置到 CHANGELOG.md"
+    howto "把这一节挪到 CHANGELOG.md。规则是每次开工都要通读的，" \
+          "混进历史会稀释（rules/design-doc-discipline.md）。"
     filefail=1
   fi
   if [[ "$f" == */kb/*.md && "$base" != "INDEX.md" && $has_hist -eq 0 ]]; then
@@ -163,8 +226,11 @@ kb_files="$(find "$ROOT" -path '*/kb/*.md' -not -path '*/.git/*' \
                     "${EXCL[@]}" | sort)"
 if [[ -n "$kb_files" ]]; then
   # 定义 = 表格行首的编号；引用 = 别的任何位置出现的编号。围栏代码块不算。
+  # 「历史版本」节里的也不算——那里的表格是删除记录，已删的不变量不能再给引用背书
+  # （对抗测试实测：定义只剩历史节里一行，全部引用照绿）。
   defined="$(printf '%s\n' "$kb_files" | while IFS= read -r f; do
-      awk '/^[ \t]*```/ { infence = !infence; next } !infence' "$f"
+      awk '/^## 历史版本[[:space:]]*$/ { exit }
+           /^[ \t]*```/ { infence = !infence; next } !infence' "$f"
     done | grep -oE '^\| *I-[0-9]+(\.[0-9]+)+ *\|' | grep -oE 'I-[0-9]+(\.[0-9]+)+' | sort -u || true)"
 
   while IFS= read -r f; do
@@ -309,9 +375,23 @@ if [[ -n "$kb_files" ]]; then
   #    领域术语（RAID5、SHA256、Z3）形状上与编号分不开，靠显式声明摘出去，不靠猜。
   exemptf="$tmpd/exempt.txt"
   cut -d$'\037' -f1 "$defsf" | sort -u > "$exemptf"
+  declaredf="$tmpd/declared.txt"
   grep -hoE '<!-- *doc-lint:not-numbers[^>]*-->' "${kb_arr[@]}" 2>/dev/null \
     | sed -E 's/<!-- *doc-lint:not-numbers//; s/-->//' | tr -s ' \t' '\n' \
-    | grep -v '^$' >> "$exemptf" || true
+    | grep -v '^$' | sort -u > "$declaredf" || true
+  # not-numbers 是给 RAID5/SHA256/Z3 这类术语的。已有登记位的编号再声明豁免，
+  # 等于一行注释把检查对它关掉（对抗测试实测）——判红。
+  # 没登记过的编号声明豁免仍放行：形状上分不开 Z3 与 O2，机器只能管到这里。
+  while IFS= read -r tok; do
+    [[ -z "$tok" ]] && continue
+    if grep -qx "$tok" "$exemptf"; then
+      bad "编号 $tok 已有登记位，却被 not-numbers 声明成术语"
+      howto "删掉 not-numbers 声明里的 $tok——它是编号不是术语，引用处写成「$tok（简称）」。" \
+            "豁免只留给 RAID5、SHA256 这类与编号形状撞车的领域术语。"
+      numfails=$((numfails+1))
+    fi
+  done < "$declaredf"
+  cat "$declaredf" >> "$exemptf"
   while IFS=$'\037' read -r tok cnt; do
     [[ -z "$tok" ]] && continue
     bad "编号 $tok 出现 $cnt 次，却没有任何登记位"
