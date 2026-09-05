@@ -158,7 +158,10 @@ while IFS= read -r f; do
     succ="$(printf '%s\n' "${L[@]}" | grep -vE '^[[:space:]]*#' | grep -E '^[[:space:]]*ok[[:space:]]+"|✓' || true)"
     # 判据只对**报了成功**的脚本生效。一个字都不说的脚本是另一类问题，这里不判——
     # 「认不出」与「通过」要分开（rules/show-me-test.md）。
-    if [[ -n "$succ" ]] && ! grep -q '\$' <<< "$succ"; then
+    # 计数认两种占位：shell 的 `$n` 与 python f-string 的 `{n}`。
+    # 只认 `$` 的话，用 python 实现的阶段全是假红——它们的成功摘要在 python 里格式化
+    # （singlefs 的 26 / 27 号阶段实测）。
+    if [[ -n "$succ" ]] && ! grep -qE '[$][A-Za-z_{(]|\{[A-Za-z_]' <<< "$succ"; then
       bad "$rel  成功摘要没报出检查了多少项——扫到 0 项也会报绿"
       howto "在成功那句里带上计数，例： ok \"检查通过（共 \$n 项）\"；" \
             "并让计数真的在循环里累加。确实不扫对象的脚本，写一句" \
