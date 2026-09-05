@@ -88,7 +88,10 @@ run_fixture() { # run_fixture <标签> <样本目录> <命令...>（命令自行
   while IFS= read -r w; do wants+=("$w"); done < <(sed -n 's/^want=//p' "$d/expect")
   local out="$tmpd/$(printf '%s' "$label" | tr '/ ' '__').out"
   local rc=0
-  set +e; "$@" > "$out" 2>&1; rc=$?; set -e
+  # 超时保护：挂死的检查在门禁输出里既不红也不绿，只是永远不回来——
+  # 比红的门禁危险（本轮实测：gate-lint 的一处无限循环跑了 9 分钟没结束）。
+  set +e; timeout "${SELFTEST_TIMEOUT:-60}" "$@" > "$out" 2>&1; rc=$?; set -e
+  [[ $rc == 124 ]] && say "        （超时 ${SELFTEST_TIMEOUT:-60}s，按判错记）"
   judge "$label" "$wexit" "$rc" "$out" ${wants[@]+"${wants[@]}"}
 }
 
@@ -100,7 +103,10 @@ run_scripted() { # run_scripted <名> <期望exit> <want...> -- <命令...>
   shift
   local out="$tmpd/$(printf '%s' "$name" | tr '/ ' '__').out"
   local rc=0
-  set +e; "$@" > "$out" 2>&1; rc=$?; set -e
+  # 超时保护：挂死的检查在门禁输出里既不红也不绿，只是永远不回来——
+  # 比红的门禁危险（本轮实测：gate-lint 的一处无限循环跑了 9 分钟没结束）。
+  set +e; timeout "${SELFTEST_TIMEOUT:-60}" "$@" > "$out" 2>&1; rc=$?; set -e
+  [[ $rc == 124 ]] && say "        （超时 ${SELFTEST_TIMEOUT:-60}s，按判错记）"
   judge "$name" "$wexit" "$rc" "$out" ${wants[@]+"${wants[@]}"}
 }
 

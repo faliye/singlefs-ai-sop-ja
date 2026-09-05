@@ -102,8 +102,19 @@ while IFS= read -r f; do
     fi
     [[ "$line" =~ ^[[:space:]]*# ]] && continue        # 注释里的拒绝不算
     # 算术展开不是命令位置：`bad=$((bad + 1))` 里的 `bad ` 紧跟在 `(` 后面，
-    # 按 CMD_POS 读就成了一处「拒绝」，而它只是个计数（本仓 gate.d 实测两处假红）。
-    while [[ "$line" == *'$(('* ]]; do line="${line%%'$(('*}${line#*'))'}"; done
+    # 按 CMD_POS 读就成了一处「拒绝」，而它只是个计数（singlefs 的 gate.d 实测两处假红）。
+    #
+    # ⚠️ 配对的 `))` **只在 `$((` 之后**找。在整行里找第一个 `))` 会挂死：
+    # `if ((okc)); then …; pass=$((pass+1)); fi` 这样的行，第一个 `))` 落在 `$((` 前面，
+    # 切完之后剩下的串仍然含 `$((` 而且不变短——真实语料上当场无限循环（写这条时实测）。
+    # 现在每轮删掉一整对 `$(( … ))`，长度严格递减，所以一定停得下来。
+    while :; do
+      pre="${line%%'$(('*}"
+      [[ "$pre" == "$line" ]] && break              # 没有 $((
+      rest="${line#*'$(('}"
+      [[ "$rest" == *'))'* ]] || break              # 没有配对的 ))
+      line="$pre${rest#*'))'}"
+    done
 
     if [[ "$line" =~ $DIE_RE ]] && naked_die "$line"; then
       checked=$((checked+1))
