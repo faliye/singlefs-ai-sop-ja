@@ -1,70 +1,81 @@
 ---
 name: crash-test
-description: 跑 singlefs 的验证套件——LKMM 内存序、QEMU/KVM 压测、崩溃点重放、模型对拍。判断写路径对不对、或要给并发改动补验证时用它。
+description: singlefs の検証スイートを走らせる——LKMM メモリ順序、QEMU/KVM ストレス、クラッシュ点リプレイ、モデル対照テスト。書き込み経路が正しいかを判断するとき、並行性の変更に検証を付けるときに使う。
 ---
+<!-- generated-from: skills/crash-test/SKILL.md sha256:03baaac78f5de9508b3473142cef72d25fdd23bd8138713225d7a659d955f9f8 -->
 
-# 验证套件
+# 検証スイート
 
-规则在 `rules/test-discipline.md` 与 `rules/show-me-test.md`。
+規則は `rules/test-discipline.md` と `rules/show-me-test.md`。
 
-## 四种验证的分工
+## 四つの手段の分担
 
-| 手段 | 验什么 | 状态 |
+| 手段 | 何を検証するか | 状態 |
 |---|---|---|
-| **LKMM（herd7）** | 并发路径的内存序：无锁结构、屏障、跨核可见性 | ✅ 可用 |
-| **QEMU/KVM** | 真实负载下的端到端行为，准入的最终判据 | ⚙️ harness 就绪，缺负载 |
-| 崩溃点重放 | 任意断电点能否恢复 | ❌ 未实现 |
-| 模型对拍 | 功能正确性：操作序列结果对不对 | ❌ 未实现 |
+| **LKMM（herd7）** | 並行経路のメモリ順序：ロックフリー構造、バリア、コア間の可視性 | ✅ 利用可 |
+| **QEMU/KVM** | 実負荷での端から端までの挙動。受入の最終判定基準 | ⚙️ harness は用意済み、負荷が無い |
+| クラッシュ点リプレイ | 任意の断電点から復帰できるか | ❌ 未実装 |
+| モデル対照テスト | 機能的正しさ：操作列の結果が正しいか | ❌ 未実装 |
 
 ## LKMM
 
 ```bash
 bash .claude/scripts/lkmm.sh
-SINGLEFS_KERNEL_TREE=/path/to/linux bash .claude/scripts/lkmm.sh   # 指定内核树
+SINGLEFS_KERNEL_TREE=/path/to/linux bash .claude/scripts/lkmm.sh   # カーネルツリーを指定
 ```
 
-每个 `litmus/*.litmus` 必须声明期望判定，脚本拿 herd7 的 `Observation` 行比对：
+`litmus/*.litmus` は期待する判定を宣言しなければならない。スクリプトは herd7 の
+`Observation` 行と突き合わせる：
 
 ```
-(* singlefs-expect: Never *)      坏结果必须不可能发生
-(* singlefs-expect: Sometimes *)  坏结果可能发生（对照组）
+(* singlefs-expect: Never *)      悪い結果は起こり得てはならない
+(* singlefs-expect: Sometimes *)  悪い結果は起こり得る（対照群）
 ```
 
-**每条 Never 都要配一个去掉屏障的 Sometimes 对照组。** 只有一份的话，
-判出 Never 也分不清是「屏障挡住了」还是「这个模式本来就撞不上」——
-脚本会直接拒绝只有 Never 的清单。
+**Never の一本ごとに、バリアを外した Sometimes の対照群を付ける。** 一本しか無ければ、
+Never が出ても「バリアが止めたのか」「そのパターンが元々当たらないのか」を区別できない——
+対になる一本が無い Never をスクリプトは拒否する。
 
-写 litmus 时注意两个只有 klitmus7 才会炸的坑（脚本会提前拦）：
-用了 `rN` 必须有 `int rN;`；init 块里给 `atomic_t` 形参赋初值必须带类型。
+対応付けは**ファイル名で見る**：`x.litmus` の対照群は `x-<接尾辞>.litmus`
+（慣例は `x-nofence.litmus`）で、Sometimes を宣言する。他所に Sometimes が何本あろうと
+数に入らない——それは別の問いに答えている。
+
+klitmus7 でしか露見しない落とし穴が二つある（スクリプトが手前で止める）：
+`rN` を使うなら `int rN;` が要る。init ブロックで `atomic_t` の仮引数に初期値を与えるなら型が要る。
 
 ## QEMU
 
 ```bash
-bash .claude/scripts/qemu.sh --selftest        # 验证 harness 本身
-bash .claude/scripts/qemu.sh . payload.sh      # 跑一个负载
-GATE_QEMU=1 bash .claude/scripts/gate.sh       # 门禁里带上 harness 自检
+bash .claude/scripts/qemu.sh --selftest        # harness 自体を検証する
+bash .claude/scripts/qemu.sh . payload.sh      # 負荷を一つ走らせる
+GATE_QEMU=1 bash .claude/scripts/gate.sh       # ゲートに harness 自己検査を含める
 ```
 
-**`--selftest` 会跑一个故意失败的 payload**，确认 harness 认得出失败。
-认不出就说明它会把失败当成成功，这时 harness 自己报错。
+**`--selftest` はわざと失敗する payload を走らせ**、harness が失敗を失敗と見分けられるか
+確かめる。見分けられなければ失敗を成功として報告することになり、そのとき harness は自ら
+エラーを出す。
 
-找不到可读内核时脚本会失败并给出两条路（`SINGLEFS_KERNEL=` 或给 `/boot/vmlinuz-*` 加读权限）——
-**不会静默降级到软件模拟**，那会慢到不可用却看起来在跑。
+読めるカーネルが見つからないときスクリプトは失敗し、二つの道を示す
+（`SINGLEFS_KERNEL=` を指すか、`/boot/vmlinuz-*` に読み権限を付けるか）——
+**ソフトウェアエミュレーションへ黙って降格しない**。動いているように見えて使い物にならない遅さになる。
 
-## 为什么崩溃点重放不能用别的代替
+## クラッシュ点リプレイを他で代替できない理由
 
-**单测全绿、模型对拍全过、checker 无报错——三个加起来也不构成崩溃一致性证据。**
+**単体テストが全緑、モデル対照が全通過、checker が無報告——三つ足してもクラッシュ一貫性の根拠にならない。**
 
-它们验的是「正常路径下状态对不对」。崩溃一致性问的是另一个问题：
-**在任意一个写请求之后断电，重启还能不能收场。** 这只有把每个崩溃点都试一遍才能回答。
+それらが検証するのは「正常経路での状態が正しいか」である。クラッシュ一貫性が問うのは別の問いだ：
+**任意の書き込み要求のあとで断電したとき、再起動して収拾がつくか。**
+これは各クラッシュ点を一つずつ試す以外に答えようがない。
 
-实现它需要（按依赖顺序）：磁盘格式第一版（`kb/decisions.md` D4/D8）→ mkfs + checker
-→ 事务提交路径 → 块层写记录（`dm-log-writes`）。
+実装に必要なもの（依存順）：ディスク書式の第一版（プロジェクトの `kb/decisions.md` の
+ディスク書式に関する項目を見る）→ mkfs + checker → トランザクションのコミット経路 →
+ブロック層の書き込み記録（`dm-log-writes`）。
 
-## 判读纪律
+## 判読の規律
 
-- **「没复现问题」不等于「没问题」。** 要说崩溃一致性成立，
-  得说清这一轮枚举了多少个崩溃点、是不是全部。
-- **checker 没报错也可能是检查没实现。** 先看 `kb/invariants.md` 的状态列。
-- **读不到判定结果时整轮作废**，绝不当成通过——`lkmm.sh` 读不到 `Observation`、
-  `qemu/run.sh` 读不到退出标记，都是直接失败。
+- **「再現しなかった」は「問題が無い」ではない。** クラッシュ一貫性が成立すると言うには、
+  この回でクラッシュ点をいくつ列挙したのか、それが全部なのかを述べること。
+- **checker が無報告なのは、その検査が未実装なだけかもしれない。** 先に
+  `kb/invariants.md` の状態列を見る。
+- **判定が読めないときはその回を破棄**し、決して通過扱いにしない——`lkmm.sh` が
+  `Observation` を読めない、`qemu/run.sh` が終了マーカーを読めない、どちらも即失敗である。

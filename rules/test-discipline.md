@@ -1,4 +1,4 @@
-<!-- generated-from: rules/test-discipline.md sha256:30b92b57eb5559790979638a5ab28993743a96d2e61a427a6c0777e30e2b3656 -->
+<!-- generated-from: rules/test-discipline.md sha256:d0cb001cae2da4cffb15354abf1461b10b056544ddd82ef3c4d0fa5144ec9519 -->
 <!-- doc-lint:rule-definition -->
 # テスト規律
 

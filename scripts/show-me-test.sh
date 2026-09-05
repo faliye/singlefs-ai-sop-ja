@@ -14,7 +14,8 @@
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 ROOT="${1:-$(project_root)}"
-[[ -d "$ROOT" ]] || die "找不到项目根：$ROOT"
+[[ -d "$ROOT" ]] || die "找不到项目根：$ROOT" \
+  "把项目根作为第一个参数传进来： bash scripts/show-me-test.sh <项目根>"
 
 BASE="$(diff_base "$ROOT")"
 say "  diff 基准：$BASE"
@@ -33,13 +34,28 @@ TEST_RE='#\[test\]|#\[cfg\(test\)\]|proptest!|#\[kani|#\[tokio::test\]'
 # 注释里的标注不算数：整行注释、块注释行、以及**行尾注释**（`code // #[test]`
 # 这种走私对抗测试实测过）。先剁掉 // 到行尾，再滤块注释行，剩下的才配匹配。
 strip_comments() { sed -E 's@//.*@@' | grep -vE '^\+?[[:space:]]*(/\*|\*)' || true; }
-test_lines="$(added_lines "$ROOT" "$BASE" | strip_comments | grep -E "$TEST_RE" || true)"
+# ⚠️ 只在 **.rs 文件的新增行**里找测试标注。
+# 不按路径过滤的话，`#[test]` 出现在任何被加的行里都算数——在 CLAUDE.md 里写一句
+# 「提交模板：新增测试请写 #[test]」就能让改代码不带测试的提交过闸
+# （对抗测试实测，gate 退出码 0）。同理 Rust 字符串字面量里的也不算。
+added_rs_lines() {
+  local root="$1" base="$2" f
+  while IFS= read -r f; do
+    [[ "$f" == *.rs ]] || continue
+    git -C "$root" diff -U0 "$base" -- "$f" 2>/dev/null | grep '^+' | grep -v '^+++' || true
+    git -C "$root" diff -U0 --cached -- "$f" 2>/dev/null | grep '^+' | grep -v '^+++' || true
+  done < <(printf '%s\n' "$files")
+}
+strip_strings() { sed -E 's/"([^"\\]|\\.)*"//g'; }
+test_lines="$(added_rs_lines "$ROOT" "$BASE" | strip_comments | strip_strings | grep -E "$TEST_RE" || true)"
 # 新建的未跟踪文件在 diff 里看不见，内联测试会被漏掉——直接扫文件内容。
 # 对刚起步的项目，新文件是常态，漏掉等于这条门禁形同虚设。
 untracked_tests=""
 while IFS= read -r uf; do
   [[ -f "$ROOT/$uf" ]] || continue
-  if strip_comments < "$ROOT/$uf" | grep -qE "$TEST_RE"; then untracked_tests+="$uf"$'\n'; fi
+  # 只认真的会被编译的位置：仓库根丢一个 scratch.rs 不算带了测试（对抗测试实测）
+  case "$uf" in crates/*/src/*|crates/*/tests/*|crates/*/benches/*|tests/*|benches/*|fuzz/*) ;; *) continue ;; esac
+  if strip_comments < "$ROOT/$uf" | strip_strings | grep -qE "$TEST_RE"; then untracked_tests+="$uf"$'\n'; fi
 done < <(git -C "$ROOT" ls-files --others --exclude-standard -- '*.rs' 2>/dev/null || true)
 test_lines="$test_lines$untracked_tests"
 # tests/ 下改了 .rs 还不够，得真的含测试标注——`echo '// 空壳' > tests/t.rs`
@@ -54,7 +70,7 @@ if [[ -z "$code_changed" ]]; then
   ok "无 crates 代码改动（仅文档/脚本），本阶段不适用"
   exit 0
 elif [[ -n "$tests_content_ok" || -n "$test_lines" ]]; then
-  ok "代码改动伴随测试改动"
+  ok "代码改动伴随测试改动（改了 $(printf '%s\n' "$code_changed" | grep -c .) 个代码文件）"
   [[ -n "$test_files" ]] && printf '%s\n' "$test_files" | sed 's/^/        测试文件: /'
   [[ -n "$test_lines" ]] && say "        新增测试标注 $(printf '%s\n' "$test_lines" | grep -c .) 处"
   warn "脚本只能验证「有测试」，验证不了「测试会红」——"

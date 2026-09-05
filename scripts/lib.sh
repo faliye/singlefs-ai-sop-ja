@@ -32,13 +32,27 @@ head1() { printf '\n%s══ %s ══%s\n' "$C_BLD" "$*" "$C_RST"; }
 ok()    { printf '%s  ✓%s %s\n' "$C_GRN" "$C_RST" "$*"; }
 bad()   { printf '%s  ✗%s %s\n' "$C_RED" "$C_RST" "$*"; }
 warn()  { printf '%s  !%s %s\n' "$C_YEL" "$C_RST" "$*"; }
-die()   { bad "$*"; exit 1; }
 
 # 拒绝一个提交时，必须同时说清下一步做什么。
 # 默认提交者是想通过的——拒绝而不给出路，等于让人靠猜，而靠猜的人会去绕过门禁。
 # scripts/gate-lint.sh 强制：每个非汇总性的 bad 后面 4 行内必须有 howto。
 howto() { printf '%s     → 怎么办：%s %s\n' "$C_YEL" "$C_RST" "$1"; shift
           for l in "$@"; do printf '                %s\n' "$l"; done; }
+
+# 直接终止的拒绝。**第一个参数是消息，第二个起是出路**——
+# die 也是拒绝，同样不许只说「不合格」（rules/sop-first.md）。
+# 少了出路时这里兜一句，静态那半由 scripts/gate-lint.sh 拦（它检查调用点的参数个数）。
+die()   { bad "$1"; shift
+          if [[ $# -gt 0 ]]; then howto "$@"
+          else howto "这条拒绝没写出路，是本仓自己的缺陷。请给这处 die 补上第二个参数。"; fi
+          exit 1; }
+
+# ── 「命令位置」的唯一定义 ──────────────────────────────
+# gate-lint 与 shell-lint 都要判「这个记号是被执行了，还是只是出现在字符串里」。
+# 各写一份的结果：shell-lint 的那份含 `(){}`，gate-lint 的那份没有，于是
+# `( bad "不合格" )` 与 `eval bad "..."` 两种形态整体漏检（对抗测试实测）。
+# 同一个事实只许有一处权威记录（rules/kb-discipline.md 第 4 条）——就是这里。
+CMD_POS='(^[[:space:]]*|[;&|(){}`][[:space:]]*|(then|else|do|sudo|env|xargs|exec|eval|command|time)[[:space:]]+)'
 
 # 找到项目根：向上找到含 .singlefs-ai-sop-version 或 .git 的目录
 project_root() {
@@ -63,11 +77,29 @@ diff_base() {
     if git -C "$root" rev-parse --verify -q "$def" >/dev/null; then
       local mb
       if mb="$(git -C "$root" merge-base HEAD "$def" 2>/dev/null)" && [[ -n "$mb" ]]; then
-        # 当前就在默认分支上时 merge-base 等于 HEAD。以前退化为只看工作区——
-        # 于是「先 commit 再跑门禁」= 无对象可判，无测试的改动就这么溜进 master
-        # （对抗测试实测）。所以退到 HEAD~1，把最新那个 commit 一并纳入判定。
+        # 在默认分支上时 merge-base 等于 HEAD，得往回退。
+        #
+        # 退一格（HEAD~1）不够：**分两次提交就绕过去了**——第一次改代码不带测试，
+        # 第二次只改文档，跑门禁时基准是第一次，于是「本次无 crates 改动」，绿灯
+        # （对抗测试实测，gate 退出码 0）。判据比规则弱一档：规则说「改了代码要带
+        # 测试」，检查却只问「最近一个 commit 里有没有」。
+        #
+        # 所以退到**已经推出去的那个点**：本地还没推的提交全部纳入判定，
+        # 攒多少次都躲不掉。没有远端跟踪分支时才退回 HEAD~1。
         if [[ "$mb" == "$(git -C "$root" rev-parse HEAD 2>/dev/null)" ]]; then
-          local p1
+          local up p1
+          # 优先级：上游 > 门禁上次通过的位置 > HEAD~1。
+          # 前两个都是「已经过闸的地方」，此后的所有提交一并纳入判定。
+          if up="$(git -C "$root" rev-parse -q --verify "@{upstream}" 2>/dev/null)" \
+             && [[ -n "$up" && "$up" != "$(git -C "$root" rev-parse HEAD)" ]]; then
+            printf '%s' "$up"; return 0
+          fi
+          local ok
+          if ok="$(git -C "$root" rev-parse -q --verify refs/singlefs/gate-ok 2>/dev/null)" \
+             && [[ -n "$ok" && "$ok" != "$(git -C "$root" rev-parse HEAD)" ]] \
+             && git -C "$root" merge-base --is-ancestor "$ok" HEAD 2>/dev/null; then
+            printf '%s' "$ok"; return 0
+          fi
           if p1="$(git -C "$root" rev-parse -q --verify HEAD~1 2>/dev/null)"; then
             printf '%s' "$p1"; return 0
           fi

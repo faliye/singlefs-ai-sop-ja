@@ -1,8 +1,10 @@
-# <项目名>
+<!-- generated-from: templates/CLAUDE.project.md sha256:64d43f9ae51f9eb8988adbeab22381e802f7aef2d69bcb6e772709910e7939d5 -->
+# <プロジェクト名>
 
-<三到五行：这个项目是什么、当前在哪个里程碑、和 singlefs 主线什么关系。不要更长。>
+<三〜五行：このプロジェクトが何か、今どのマイルストーンか、singlefs 本線とどういう関係か。
+それより長くしない。>
 
-## 规则（始终生效）
+## 規則（常時有効）
 
 @.claude/singlefs-ai-sop/rules/engineering-philosophy.md
 @.claude/singlefs-ai-sop/rules/sop-first.md
@@ -16,49 +18,56 @@
 @.claude/singlefs-ai-sop/rules/verify-before-claiming.md
 @.claude/singlefs-ai-sop/rules/command-safety.md
 @.claude/singlefs-ai-sop/rules/writing-economy.md
+@.claude/singlefs-ai-sop/rules/writing-style.md
 @.claude/singlefs-ai-sop/rules/session-wrapup.md
 
-**文件系统设计特有的规则**（事务、崩溃一致性、盘上格式那一类）放 `.claude/rules/`，
-在这里一并 `@` 引用，不要上游到共享 SOP——那里只放协作规范。
+**ファイルシステム設計に固有の規則**（トランザクション、クラッシュ一貫性、ディスク書式の類）は
+`.claude/rules/` に置き、ここで併せて `@` 参照する。共有 SOP へ上げない——
+あちらには協働の規範だけを置く。
 
-（上面的 `@.claude/singlefs-ai-sop/...` 是 [singlefs-ai-sop](.claude/singlefs-ai-sop/README.md) 分发的共享规则，
-**改它们等于改掉每个参与者的下限**——要改就改上游并抬 `VERSION`，不许在项目里就地改。）
+（上の `@.claude/singlefs-ai-sop/...` は
+[singlefs-ai-sop](.claude/singlefs-ai-sop/README.md) が配布する共有規則である。
+**それらを変えることは、参加者全員の下限を変えることに等しい**——変えるなら上流を変えて
+`VERSION` を上げる。プロジェクト内でその場で書き換えてはならない。）
 
-## 项目本地事实
+## プロジェクト固有の事実
 
-| 文件 | 内容 |
+| ファイル | 内容 |
 |---|---|
-| `.claude/kb/decisions.md` | 设计决策：定了什么、为什么、还没定什么 |
-| `.claude/kb/experiments.md` | 实验记录：问题、先写死的判据、对照与变异、复跑命令 |
-| `.claude/kb/invariants.md` | 不变量清单，checker 是它的可执行形式 |
-| `.claude/kb/prior-art.md` | 他家方案调研，含来源与口径 |
-| `.claude/kb/pitfalls.md` | 避坑清单，每做设计决定回来对一遍 |
-| `.claude/kb/checks-owed.md` | 欠的检查：知道要拦什么但还拦不了的，含前置 |
-| `records/` | 建设过程 |
+| `.claude/kb/decisions.md` | 設計判断：何が決まり、なぜ決まり、何がまだ決まっていないか |
+| `.claude/kb/experiments.md` | 実験記録：問い、先に決め打った判定基準、対照と変異、再実行コマンド |
+| `.claude/kb/invariants.md` | 不変条件リスト。checker がその実行可能な形 |
+| `.claude/kb/prior-art.md` | 他実装の調査。出典と計測条件つき |
+| `.claude/kb/pitfalls.md` | 落とし穴一覧。設計判断のたびに照合しに戻る |
+| `.claude/kb/checks-owed.md` | 借りている検査：止めたいと分かっているがまだ止められないもの。前提つき |
+| `records/` | 構築の経過 |
 
-## 门禁
+## ゲート
 
-门禁的目的是**把每一份提交抬到值得花人的时间去看那条线上**，不是把谁挡在外面。
-它不按来源区分提交者，只区分带证据的和不带的。
+ゲートの目的は**提出物のすべてを「人の時間を割いて見る価値がある」線まで引き上げる**ことであって、
+誰かを締め出すことではない。出どころで提出者を分けず、根拠を伴うものと伴わないものだけを分ける。
 
 ```bash
-bash .claude/scripts/gate.sh          # 准入门禁，提交前必跑
-GATE_QEMU=1 bash .claude/scripts/gate.sh   # 再加 QEMU harness 自检
+bash .claude/scripts/gate.sh          # 受入ゲート。提出前に必ず
+GATE_QEMU=1 bash .claude/scripts/gate.sh   # さらに QEMU harness 自己検査を加える
 
-bash .claude/scripts/check.sh         # 快速反馈（格式/lint/构建/单测）
-bash .claude/scripts/lkmm.sh          # 内存序（herd7 + litmus/）
-bash .claude/scripts/qemu.sh --selftest    # QEMU harness 自检
-bash .claude/scripts/gate-lint.sh     # 门禁自身：每条拒绝是否都给了下一步
-bash .claude/scripts/env.sh           # 环境自检
+bash .claude/scripts/check.sh         # 速い折り返し（書式/lint/ビルド/単体テスト）
+bash .claude/scripts/lkmm.sh          # メモリ順序（herd7 + litmus/）
+bash .claude/scripts/qemu.sh --selftest    # QEMU harness 自己検査
+bash .claude/scripts/gate-lint.sh     # ゲート自身：拒否のすべてが次の一手を示しているか
+bash .claude/scripts/shell-lint.sh    # shell 規律：パターン一致での kill、サブシェルからの値の持ち出し
+bash .claude/scripts/env.sh           # 環境自己検査
 ```
 
 **Gate proves evidence requirements, not semantic correctness.**
-绿色只说明证据要求被满足，不代表语义正确——`gate.sh` 每次都会列出未实现的阶段。
+緑は根拠要件が満たされたことを示すだけで、意味的な正しさを示さない——
+`gate.sh` は毎回、未実装の段階を並べて出す。
 
-## 本项目的特殊性
+## このプロジェクトの特殊性
 
-<一到三条：只写会改变做法的。展开的判据放 kb，这里只留指路。>
+<一〜三条。やり方が変わるものだけ書く。展開した判定基準は kb に置き、ここには道案内だけ残す。>
 
-## 一句话版本
+## 一段落版
 
-<三到四句，每句一条本项目最容易翻车的判据。通用纪律不要抄进来，它们在 rules 里。>
+<三〜四文。各文はこのプロジェクトで最も転びやすい判定基準を一つずつ。
+一般的な規律はここに写さない。それは rules にある。>

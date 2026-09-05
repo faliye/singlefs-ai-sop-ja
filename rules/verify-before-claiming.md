@@ -1,4 +1,4 @@
-<!-- generated-from: rules/verify-before-claiming.md sha256:78555e22c3feb89b0db8ed13d84c3a1eecb31a04033782e30888674447a5221a -->
+<!-- generated-from: rules/verify-before-claiming.md sha256:997261544c93ba38111760e7d88019a634c79dfbffb49f54a56fc573ea94ae95 -->
 <!-- doc-lint:rule-definition -->
 # 外部の状態を述べる前に、その場で確認する
 

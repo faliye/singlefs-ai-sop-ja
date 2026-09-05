@@ -1,0 +1,3 @@
+exit=1
+want=外面拿不到这个值
+want=$LOGF 赋值

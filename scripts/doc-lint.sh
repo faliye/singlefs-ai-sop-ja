@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 # 文档铁律的自动检查。rules/doc-discipline.md靠这个脚本强制，不靠自觉。
 #
-# 检查十条：
+# 检查十二条：
 #   A. 正文（「## 历史版本」之前的部分）不许出现历史陈述与就地废弃标注
 #   A2. 围栏必须配对；「## 历史版本」之后不许再开 ## 级小节——
 #       两者任一成立时，其后内容都躲开了全部扫描（对抗测试实测）
 #   B. CLAUDE.md 与 rules/*.md 不许有「## 历史版本」节（历史外置）
+#   B3. GLOSSARY.md 的说明列必须三语并列（zh<br>en<br>ja），少一段判红
+#   B2. agents/*.md 同 rules/：不留历史节；且必须有 frontmatter 的 name（与文件名一致）
+#       与 description——两样都不会报错，只会安静地不生效
 #   C. kb/*.md 必须有「## 历史版本」节收尾
 #   D. kb/*.md 正文不许出现上下文指代、方位指代与自指称呼（检索把单条端出来时，
 #      「上文」「下面」「此处」一起断掉；rules/kb-discipline.md 第 1 条）
@@ -13,6 +16,8 @@
 #   F. kb/*.md 里一个编号只许有一处登记位（rules/kb-discipline.md 第 5 条）
 #   G. kb/*.md 里编号的每一处引用都要带上简称，且与登记位一致（同上）
 #   H. kb/*.md 里编号形状的记号反复出现（≥3 次）却一处登记位都没有（同上）
+#   I. 所有给人读的 .md 不许出现翻译腔 / 古风腔 / 过度解释的固定构式
+#      （rules/writing-style.md；同 A、D，只在有词表的语言上跑）
 #
 # 门禁自己的样本（$ROOT/scripts/fixtures/）不扫：那些文件是**故意写坏的**，
 # 排除写成相对本次 ROOT 的路径——selftest 把某个样本目录当 ROOT 跑时，这个前缀不匹配，
@@ -26,7 +31,8 @@
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 ROOT="${1:-$(project_root)}"
-[[ -d "$ROOT" ]] || die "找不到项目根：$ROOT"
+[[ -d "$ROOT" ]] || die "找不到项目根：$ROOT" \
+  "把项目根作为第一个参数传进来： bash scripts/doc-lint.sh <项目根>"
 
 tmpd="$(mktemp -d)"; trap 'rm -rf "$tmpd"' EXIT
 
@@ -41,25 +47,77 @@ case "$ROOT" in
   *) EXCL+=(-not -path '*/singlefs-ai-sop/*') ;;
 esac
 
+# ── 语言 ────────────────────────────────────────────────
+# 本脚本在 SHARED 里逐字节复制到各语言仓，而它的判据（历史陈述的词、
+# 「## 历史版本」这个标题、上下文指代与自指的词表）**全是语言相关的字面量**。
+# 复制过去之后：英文项目的 kb 写 `## Revision history`，被要求写中文标题——
+# 而英文的 "previously"、"as noted above" 一条也抓不到（复核实测：
+# **en 仓自己发的 kb 模板过不了 en 仓自己的 doc-lint**）。
+# 误拒比漏检更糟：门禁一旦开始误拒，人就会绕过它。
+#
+# 所以判据按语言取。语言从包的 I18N 的 this= 读；读不到按参照语言（zh）算。
+# **没有词表的语言，对应的检查显式报「未实现」，不静默通过**
+# （rules/show-me-test.md：门禁不许假装通过）。
+DOC_LANG="$(sed -n 's/^this=//p' "$(dirname "${BASH_SOURCE[0]}")/../I18N" 2>/dev/null | head -1)"
+[[ -n "$DOC_LANG" ]] || DOC_LANG=zh
+
+case "$DOC_LANG" in
+  zh) HIST_HEAD='## 历史版本' ;;
+  en) HIST_HEAD='## Revision history' ;;
+  ja) HIST_HEAD='## 改訂履歴' ;;
+  *)  HIST_HEAD='## 历史版本' ;;
+esac
+
+# 词表型检查（历史陈述 A、上下文指代与自指 D）只有中文词表。
+# **不给别的语言硬造一套**：这类判据是用字形黑名单去判语义，中文这一套是按撞到的
+# 假红逐个补出来的（`脚副样文版译抄剧根基成日资蓝范母拓孤标课` 这串就是存档），
+# 再造两套等于把假红面乘三。没有就说没有——门禁不许假装通过
+# （rules/show-me-test.md）。结构型检查（围栏、历史节的有无与位置、编号治理）
+# 与语言无关，所有语言照跑。
+WORDLIST=0
+[[ "$DOC_LANG" == zh ]] && WORDLIST=1
+
 # 违规模式：正则 → 为什么违规
+# ⚠️ **每条模式的 why 都要不一样。** 共用一句的话，样本只需一条 want 就能盖住几条，
+#    于是删掉其中任一条都不会红——原先「原先/以前/之前」三条共用「正文不许写历史陈述」，
+#    复核的变异测试逐条删，三次全绿。
+# ⚠️ 方括号集合里**不许用 \] \[ 转义**：POSIX 规定括号内的反斜杠是字面量，
+#    GNU grep 照 POSIX 办，于是 '[〕】\]]' 变成「〕|】|\ 之后再跟一个 ]」——
+#    这条模式从来没命中过任何东西（本轮审计实测）。要收进 ] 就把它放在集合首位：
+#    '[]〕】]'；要收进 [ 直接写 '[[〔【]'。fixtures/doc-lint/histstate 盯着它。
 PATTERNS=(
   '~~[^~]'                    '正文不许用删除线标注废弃，直接删掉并写进「历史版本」'
-  '[〔【\[]已废弃[〕】\]]'      '正文不许就地标注已废弃'
-  '已废弃'                     '正文不许出现"已废弃"，删掉旧内容并写进「历史版本」'
-  '原为'                       '正文不许写"原为 X"，直接改成现行值'
-  '原先'                       '正文不许写历史陈述'
-  '以前[是叫为]'                '正文不许写历史陈述'
-  '之前[是叫为]'                '正文不许写历史陈述'
-  '曾经'                       '"曾经"只能出现在「历史版本」节内'
-  '已被.\{0,12\}覆盖'           '正文不许就地标注被覆盖，删掉并写进「历史版本」'
+  '[[〔【]已废弃[]〕】]'         '正文不许就地标注已废弃'
+  '[（〔【(]已废弃'              '正文不许就地标注已废弃，删掉旧内容并写进「历史版本」'
+  '[（(][[:space:]]*原为'        '正文不许写"（原为 X）"，直接改成现行值'
+  '[^还复恢化]原先[^前]'         '正文不许写"原先 X"，直接改成现行值'
+  '以前[叫是][^否]'              '正文不许写"以前叫/是 X"，直接改成现行值'
+  '之前[叫][^否]'                '正文不许写"之前叫 X"，直接改成现行值'
+  '曾经[叫是]'                   '"曾经叫/是"只能出现在「历史版本」节内'
+  '已被[[:space:]]*[A-Z][A-Za-z-]*[0-9][^，。；]\{0,4\}覆盖'  '正文不许就地标注被某条覆盖，删掉并写进「历史版本」'
+)
+
+# ── I. 文风：翻译腔与古风腔的固定构式（rules/writing-style.md）──────
+# 只查**词表里那些固定说法**。句子顺不顺、转折多不多余、解释啰不啰嗦，机器判不了，
+# 那半靠人念一遍——词表全绿不代表这条守住了，只代表没踩到最明显的几个坑。
+# 与 A/D 同样是词表型检查，所以同样只在有词表的语言上跑。
+STYLE=(
+  '在[^，。；：]\{0,10\}的情况下'   '翻译腔：「在……的情况下」→ 直接说「……的时候」，或者整句重写'
+  '对[^，。；：]\{1,10\}而言'       '翻译腔：「对……而言」→「对……来说」'
+  '就[^，。；：]\{1,10\}来说'       '翻译腔：「就……来说」→「对……来说」，或者删掉'
+  '使得[^到以]'                    '翻译腔：「使得」→「让」'
+  '\(^\|[^不未别]\)\(进行\|予以\|加以\)..'  '翻译腔：「进行/予以/加以 + 动词」→ 直接用那个动词'
+  '\(此乃\|实乃\|是故\|然则\|殊为\|不失为\)'  '古风腔：直接说这是什么、所以怎样'
+  '\(众所周知\|毋庸置疑\|不言而喻\|无可厚非\)'  '过度解释：这几个词说了等于没说，删掉'
+  '诚然[^，。]\{0,12\}[，。]'      '不必要的转折：「诚然……但是」多半两边不冲突，只留你真想说的那半'
 )
 
 fails=0; skipped=0; checked=0
 
 # 输出正文部分（截到「## 历史版本」之前），并剔除围栏代码块
 body_of() {
-  awk '
-    /^## 历史版本[[:space:]]*$/ { exit }
+  awk -v HIST="$HIST_HEAD" '
+    $0 == HIST { exit }
     /^[ \t]*```/ { infence = !infence; next }
     { if (!infence) print NR "\t" $0; else print NR "\t" }
   ' "$1"
@@ -75,6 +133,31 @@ while IFS= read -r f; do
     [[ -n "${DOC_LINT_VERBOSE:-}" ]] && warn "跳过 $rel（历史文件）"
     skipped=$((skipped+1)); continue
   fi
+  base="$(basename "$f")"
+  # 认围栏：design-doc-discipline 的示例块里就有一行「## 历史版本」，围栏里的不算数
+  has_hist="$(awk -v HIST="$HIST_HEAD" '/^[ \t]*```/{fence=!fence;next} fence{next}
+                   $0 == HIST {print 1; exit}' "$f")"
+  [[ -n "$has_hist" ]] || has_hist=0
+
+  # ⚠️ **历史节的有无要在免检牌之前判。**
+  # 免检牌的用途是「这份文件在定义那些模式，正文里出现『原为 X』不算违规」——
+  # 它管的是**模式匹配**，不该连「有没有 ## 历史版本 这个标题」这种纯结构判定一起豁免。
+  # 而本仓 14 份规范文本全带着这张牌，于是 design-doc-discipline 声称由本脚本强制的
+  # 那条「rules 连文末历史节都不留」，对它真正管的那批文件一次也没红过（复核实测）。
+  structfail=0
+  if [[ "$base" == "CLAUDE.md" && $has_hist -eq 1 ]]; then
+    bad "$rel  CLAUDE.md 不许有「$HIST_HEAD」节，历史外置到 kb/ 或 CHANGELOG.md"
+    howto "把这一节整段挪到 CHANGELOG.md 或 kb/。CLAUDE.md 每次开工都要通读，" \
+          "混进历史会稀释它（rules/doc-discipline.md）。"
+    structfail=1
+  fi
+  if [[ ( "$f" == */rules/*.md || "$f" == */agents/*.md ) && $has_hist -eq 1 ]]; then
+    bad "$rel  规则/agent 定义连文末「$HIST_HEAD」都不留，历史外置到 CHANGELOG.md"
+    howto "把这一节挪到 CHANGELOG.md。规则是每次开工都要通读的，" \
+          "混进历史会稀释（rules/design-doc-discipline.md）。"
+    structfail=1
+  fi
+
   # 标记必须独占一行且在文件头 5 行内——否则正文里"提到"这个字符串会被误判为跳过。
   # 且只许出现在规则本体的位置：别处（尤其 kb）贴这张免检牌，
   # 等于一行注释把整个文件的检查关掉（对抗测试实测）。
@@ -87,7 +170,11 @@ while IFS= read -r f; do
         howto "删掉文件头的 <!-- doc-lint:rule-definition -->。kb 是给模型检索的内容，" \
               "必须受检；规则定义住在 rules/，不住在 kb（rules/doc-discipline.md）。"
         checked=$((checked+1)); fails=$((fails+1)); continue ;;
-      */CLAUDE.md|*/rules/*.md|*/skills/*/SKILL.md)
+      */CLAUDE.md|*/rules/*.md|*/agents/*.md|*/skills/*/SKILL.md)
+        if [[ $structfail -eq 1 ]]; then
+          # 结构检查已经红了：这一份既不算「跳过」，也不能算通过
+          checked=$((checked+1)); fails=$((fails+1)); continue
+        fi
         [[ -n "${DOC_LINT_VERBOSE:-}" ]] && warn "跳过 $rel（规则定义文件）"
         skipped=$((skipped+1)); continue ;;
       *)
@@ -112,16 +199,28 @@ while IFS= read -r f; do
 
   # 「## 历史版本」必须是文末最后一节：它之后再开新节，
   # 新内容就躲开了正文检查——正文扫描在第一处历史节停机（对抗测试实测）。
-  afterhist="$(awk '/^[ \t]*```/{fence=!fence;next} fence{next}
-                    /^## 历史版本[[:space:]]*$/{h=1;next} h&&/^## /{print FNR}' "$f")"
+  # 认**任何级别**的标题，不只 ## —— 用 ### 或 # 另起一节同样能把内容藏到
+  # 正文扫描的停机点之后（对抗测试实测：藏了五处违规，全门禁绿）。
+  #
+  # 判据分三档，按「这是不是另起了一节」来定：
+  #   `#` / `##`  —— 另起一节，一律判红
+  #   `###`       —— 历史条目，必须**以日期开头**（`### 2026-09-02（其八）：…` 这种算）
+  #   `####` 起   —— 一条历史条目内部的小标题，放行
+  # 两处都是在真实项目上校准的：要求整行只有日期，会一次报出几百行假红；
+  # 连 `####` 一起拦，会把历史条目里的分节也拦下（都实测于 singlefs）。
+  # 被堵住的绕法是 `### 当前口径（现行）` 这种不以日期开头的标题，判据仍然管得住。
+  afterhist="$(awk -v HIST="$HIST_HEAD" '/^[ \t]*```/{fence=!fence;next} fence{next}
+                    $0 == HIST {h=1;next}
+                    h && /^#{1,3}[ \t]/ && $0 !~ /^###[ \t]+<?[0-9YyMmDd]{4}-[0-9MmDd]{2}-[0-9Dd]{2}>?/ {print FNR}' "$f")"
   if [[ -n "$afterhist" ]]; then
-    bad "$rel  「## 历史版本」之后又出现了 ## 级小节（行 $(printf '%s' "$afterhist" | tr '\n' ' ' | sed 's/ $//')）"
+    bad "$rel  「$HIST_HEAD」之后又出现了标题小节（行 $(printf '%s' "$afterhist" | tr '\n' ' ' | sed 's/ $//')）"
     howto "历史版本只能是最后一节。新内容写回正文（历史节之前）；" \
           "第二个历史节与第一个合并。"
     filefail=1
   fi
 
   i=0
+  [[ $WORDLIST -eq 1 ]] || i=${#PATTERNS[@]}      # 没有本语言的词表就不跑，末尾统一报未实现
   while [[ $i -lt ${#PATTERNS[@]} ]]; do
     pat="${PATTERNS[$i]}"; why="${PATTERNS[$((i+1))]}"
     if hits="$(printf '%s\n' "$body" | grep -n "$pat" || true)"; [[ -n "$hits" ]]; then
@@ -131,12 +230,32 @@ while IFS= read -r f; do
         bad "$rel:$ln  $why"
         say "        > $(printf '%s' "$txt" | cut -c1-80)"
         howto "删掉正文里这句，改写成现行值；确实要留档的，挪到文末「## 历史版本」，" \
-              "写成「曾经 X / 现在 Y / 改动依据 Z」。"
+              "写成「曾经 X / 现在 Y / 改动依据 Z」，放在「$HIST_HEAD」之下。"
         filefail=1
       done <<< "$hits"
     fi
     i=$((i+2))
   done
+
+  # 文风（rules/writing-style.md）。所有给人读的 .md 都查，不只 kb。
+  if [[ $WORDLIST -eq 1 ]]; then
+    j=0
+    while [[ $j -lt ${#STYLE[@]} ]]; do
+      spat="${STYLE[$j]}"; swhy="${STYLE[$((j+1))]}"
+      if shits="$(printf '%s\n' "$body" | grep -n "$spat" || true)"; [[ -n "$shits" ]]; then
+        while IFS= read -r h; do
+          ln="$(printf '%s' "$h" | sed 's/^[0-9]*://; s/\t.*//')"
+          txt="$(printf '%s' "$h" | sed 's/^[0-9]*://; s/^[0-9]*\t//')"
+          bad "$rel:$ln  $swhy"
+          say "        > $(printf '%s' "$txt" | cut -c1-80)"
+          howto "换成平时说话会用的说法。判据是「这句你会对同事说出口吗」——" \
+                "不会就改（rules/writing-style.md）。"
+          filefail=1
+        done <<< "$shits"
+      fi
+      j=$((j+2))
+    done
+  fi
 
   # kb 是被检索的，不是被通读的：一条事实被单独取出时必须仍然成立
   #   D-1 上下文指代：指着「上文」，而检索结果里没有上文
@@ -144,13 +263,15 @@ while IFS= read -r f; do
   #       那个 `## D22 单元原子性怎么合成` 的标题不会跟着走。
   #       尾字排除是实测出来的：kb 里真有「该节点」，不排除就是假红。
   #       「本工程」「本仓」「本轮」「本机」不在其内——它们指的是项目，不是文档位置。
-  if [[ "$f" == */kb/*.md ]]; then
+  if [[ "$f" == */kb/*.md && $WORDLIST -eq 1 ]]; then
     # 方位指代（见下 / 见上表 / 上面那张表）与上下文指代同一个病：检索结果里没有上下。
     # 「上一条」「下一条」**不在其内**——实测假红压倒真红：一个已登记的简称就叫
     # 「上一条时间线的残留」，还有「记下一条自评」「装得下一条记录」这类动宾。
     # 「同上」要认边界：左排除构词（协同/合同/不同），右排除「同上游/同上层」——
     # 「哈希口径同上游清单」是正常句子，不排除就是假红（对抗测试实测）。
-    ctx='如上所述|如前所述|(^|[^协合不])同上([^游层级线]|$)|见上文|见上面|前面提到|上一节|前述|下面会说|后面会说'
+    # 「同上」只在**独立成词**时算指代。写成左右排除的话，排除表永远补不完
+    # （`相同上下文`、`共同上报` 都实测撞过），而这几个词本身与指代无关。
+    ctx='如上所述|如前所述|同上[，。；：、）」]|同上$|见上文|见上面|前面提到|上一节([^点拍]|$)|前述|下面会说|后面会说'
     ctx="$ctx"'|见[上下](表|文|节|条|图|面|$|[，。；：、）」])|[如照][上下](表|图)|上面[那这]|下面[那这]'
     if refs="$(printf '%s\n' "$body" | grep -nE "$ctx" || true)"; [[ -n "$refs" ]]; then
       while IFS= read -r r; do
@@ -165,11 +286,26 @@ while IFS= read -r f; do
     fi
     # 首字排除与尾字排除同一个理由（实测假红压倒真红）：「脚本文件」「副本文件」
     # 「成本表」里的「本」是构词，不是自指；「应该文件化」里的「该」同理。
-    ben='(^|[^脚副样文版译抄剧根基成日资蓝范母拓孤标课])本'
-    gai='(^|[^应活])该'
-    tails='(决策|不变量|章节|文档|表|实验([^室]|$)|条([^件目]|$)|节([^点]|$)|文件([^夹]|$))'
-    self="$ben$tails|$gai$tails|这(条|个)(决策|实验|不变量)"
-    if selfs="$(printf '%s\n' "$body" | grep -nE "$self" || true)"; [[ -n "$selfs" ]]; then
+    # 判据从**黑名单**收到**白名单**：只认真正指「此处」的那几个固定说法。
+    # 黑名单版是按撞到的假红逐个补出来的（`脚副样文版译抄剧根基成日资蓝范母拓孤标课`
+    # 这串就是存档），而在一个文件系统项目里「该文件」「本文件系统」「该表」几乎
+    # 全指盘上的东西，不指文档位置——假红实测四条，都是这个来源。
+    #
+    # 「文件」整个拿掉：真自指用的是「本文档」。
+    # 「表」只认「本表」，不认「该表」（内存里的表就叫「该表」）。
+    tails='(决策|不变量|章节|文档|实验([^室]|$)|条([^件目]|$)|节([^点]|$)|表([^格]|$))'
+    # 左侧用**白名单**：只在句首或标点之后才算自指。
+    # 黑名单版（排掉「脚副样文版译抄剧根基成日资蓝范母拓孤标课」）是按撞到的假红
+    # 逐个补出来的，每补一个字就是一次「上一轮误拒过一个人」的存档——
+    # 而「样本文档」「成本表」「三本文档」这类构词根本枚举不完（假红实测）。
+    lead='(^|[，。；：、！？（）()「」『』【】〔〕〈〉《》“”"[:space:]])'
+    # 「该表」在文件系统项目里几乎总指内存里的表（「槽位表有 4096 项，该表常驻内存」），
+    # 真自指用的是「本表」——所以「表」只跟「本」，不跟「该」（假红实测）。
+    gtails='(决策|不变量|章节|文档|实验([^室]|$)|条([^件目]|$)|节([^点]|$))'
+    self="$lead本$tails|$lead该$gtails|$lead这(条|个)(决策|实验|不变量)"
+    # 指被测系统而不是文档位置的，一律排除
+    selfskip='本(工程|仓|轮|机|文件系统|系统|盘|实现|包|次)'
+    if selfs="$(printf '%s\n' "$body" | grep -nE "$self" | grep -vE "$selfskip" || true)"; [[ -n "$selfs" ]]; then
       while IFS= read -r r; do
         rln="$(printf '%s' "$r" | sed 's/^[0-9]*://; s/\t.*//')"
         rtx="$(printf '%s' "$r" | sed 's/^[0-9]*://; s/^[0-9]*\t//')"
@@ -183,30 +319,62 @@ while IFS= read -r f; do
     fi
   fi
 
-  base="$(basename "$f")"
-  # 认围栏：design-doc-discipline 的示例块里就有一行「## 历史版本」，围栏里的不算数
-  has_hist="$(awk '/^[ \t]*```/{fence=!fence;next} fence{next}
-                   /^## 历史版本[[:space:]]*$/{print 1; exit}' "$f")"
-  [[ -n "$has_hist" ]] || has_hist=0
+  # 结构检查（历史节的有无）已在免检牌之前跑过，结果在 $structfail
+  [[ $structfail -eq 1 ]] && filefail=1
+  # GLOSSARY 是各语言仓共用的一份，说明列必须三语并列（zh<br>en<br>ja）。
+  # 少一列不会报错，只会让用那种语言的人拿到一份他读不懂的说明——
+  # 而「先加中文，别的下次补」正是分叉的起点（rules/kb-discipline.md：矛盾比空白更糟）。
+  if [[ "$base" == "GLOSSARY.md" ]]; then
+    while IFS=$'\037' read -r gln gterm gseg; do
+      [[ -z "$gln" ]] && continue
+      bad "$rel:$gln  术语「$gterm」的说明不是三语（分出 $gseg 段，应为 3）"
+      howto "说明列写成「中文<br>English<br>日本語」，三段都要有，用 <br> 分隔。" \
+            "这一份各语言仓共用、不翻译，所以说明必须自带三语——" \
+            "少一段就是让用那种语言的人拿到一份他读不懂的说明。"
+      filefail=1
+    done < <(awk -F'|' '
+      /^[ \t]*```/ { fence = !fence; next }
+      fence { next }
+      /^\|/ && NF > 4 {
+        term = $2; gsub(/^[ \t]+|[ \t]+$/, "", term)
+        if (term ~ /^-+$/ || term == "中文" || term == "") next
+        note = $5; gsub(/^[ \t]+|[ \t]+$/, "", note)
+        n = split(note, seg, /<br>/)
+        ok = (n == 3)
+        # 每段要有实质内容：写成 `-` / `—` / `TODO` / `n/a` 就等于没写
+        # （对抗测试实测：`中文<br>-<br>-` 判绿）
+        if (ok) for (i = 1; i <= 3; i++) {
+          t = seg[i]; gsub(/^[ \t]+|[ \t]+$/, "", t)
+          if (t == "" || t ~ /^[-—–~.*_[:space:]]+$/ || tolower(t) ~ /^(todo|tbd|n\/a|na|\?+)$/) ok = 0 }
+        if (!ok) printf "%d\037%s\037%d\n", FNR, term, n
+      }' "$f")
+  fi
 
-  if [[ "$base" == "CLAUDE.md" && $has_hist -eq 1 ]]; then
-    bad "$rel  CLAUDE.md 不许有「## 历史版本」节，历史外置到 kb/ 或 CHANGELOG.md"
-    howto "把这一节整段挪到 CHANGELOG.md 或 kb/。CLAUDE.md 每次开工都要通读，" \
-          "混进历史会稀释它（rules/doc-discipline.md）。"
-    filefail=1
+  # agent 定义是被**委派**的，主模型靠 description 决定派不派它、靠 frontmatter 认它。
+  # frontmatter 不从第 1 行起 → 整个定义不被识别；name 与文件名对不上 → 派不到。
+  # 两样都不会报错，只会安静地不生效——所以做成会红的检查（rules/sop-first.md）。
+  if [[ "$f" == */agents/*.md && "$base" != "INDEX.md" ]]; then
+    aname="$(awk 'NR==1 && $0!="---" {exit} NR==1{next} /^---[[:space:]]*$/{exit} /^name:/{sub(/^name:[[:space:]]*/,""); print; exit}' "$f")"
+    adesc="$(awk 'NR==1 && $0!="---" {exit} NR==1{next} /^---[[:space:]]*$/{exit} /^description:/{sub(/^description:[[:space:]]*/,""); print; exit}' "$f")"
+    want_name="${base%.md}"
+    if [[ -z "$aname" || -z "$adesc" ]]; then
+      bad "$rel  agent 定义缺 frontmatter 的 name 或 description"
+      howto "文件第 1 行起写 YAML frontmatter（前后各一行 ---），含 name 与 description。" \
+            "description 是主模型唯一的选取依据，写清什么时候该委派它——" \
+            "写成「审查代码」没人知道何时该派（agents/INDEX.md）。"
+      filefail=1
+    elif [[ "$aname" != "$want_name" ]]; then
+      bad "$rel  agent 的 name「$aname」与文件名「$want_name」对不上"
+      howto "两者必须一致，否则按文件名去派它会派不到，而且不会报错。" \
+            "改 frontmatter 里的 name，或把文件改名成 $aname.md。"
+      filefail=1
+    fi
   fi
-  # rules 与 CLAUDE.md 同律：连文末历史节都不留（rules/design-doc-discipline.md）。
-  # 以前只查 CLAUDE.md，rules 文件留历史节不红（对抗测试实测）。
-  if [[ "$f" == */rules/*.md && $has_hist -eq 1 ]]; then
-    bad "$rel  rules 文件连文末「## 历史版本」都不留，历史外置到 CHANGELOG.md"
-    howto "把这一节挪到 CHANGELOG.md。规则是每次开工都要通读的，" \
-          "混进历史会稀释（rules/design-doc-discipline.md）。"
-    filefail=1
-  fi
+
   if [[ "$f" == */kb/*.md && "$base" != "INDEX.md" && $has_hist -eq 0 ]]; then
-    bad "$rel  kb 文档必须有「## 历史版本」节收尾"
+    bad "$rel  kb 文档必须有「$HIST_HEAD」节收尾"
     howto "在文末补上（没有历史也要留这个节，供以后写）：" \
-          "## 历史版本" "" "### $(date +%F)" "- 建档。"
+          "$HIST_HEAD" "" "### $(date +%F)" "- 建档。"
     filefail=1
   fi
 
@@ -376,7 +544,11 @@ if [[ -n "$kb_files" ]]; then
   exemptf="$tmpd/exempt.txt"
   cut -d$'\037' -f1 "$defsf" | sort -u > "$exemptf"
   declaredf="$tmpd/declared.txt"
-  grep -hoE '<!-- *doc-lint:not-numbers[^>]*-->' "${kb_arr[@]}" 2>/dev/null \
+  # 读豁免声明也要认围栏：别处所有扫描都认，只有这里不认，
+  # 于是在 ```markdown 块里「举例」写一行声明就能把豁免真的打开（对抗测试实测）。
+  awk '/^[ \t]*```/ { fence = !fence; next } fence { next }
+       /<!-- *doc-lint:not-numbers/ { print }' "${kb_arr[@]}" 2>/dev/null \
+    | grep -oE '<!-- *doc-lint:not-numbers[^>]*-->' \
     | sed -E 's/<!-- *doc-lint:not-numbers//; s/-->//' | tr -s ' \t' '\n' \
     | grep -v '^$' | sort -u > "$declaredf" || true
   # not-numbers 是给 RAID5/SHA256/Z3 这类术语的。已有登记位的编号再声明豁免，
@@ -459,6 +631,10 @@ if [[ -n "$kb_files" ]]; then
             after  = substr(seg, st + length(tok), 1)
             nxt    = substr(seg, st + length(tok) + 1, 1)
             pos = st + length(tok)
+            # `-`/`.`/`_` 留在排除集里：把它们拿掉能堵住「写成 `-D1` 藏掉裸引用」这种
+            # 刻意绕法，但代价是在真实项目的 kb 上误拒了 9 处正常引用（实测于 singlefs）。
+            # 按 selftest.sh 头部那条：误拒比漏检更会把人推去绕过门禁，所以留着。
+            # 那条绕法记在 kb-discipline.md 的「只能靠人的那半」里，不假装拦住了。
             if (before ~ /[A-Za-z0-9._-]/) continue
             if (after ~ /[A-Za-z]/) continue
             if (after ~ /[0-9]/) continue
@@ -510,8 +686,19 @@ if [[ -n "$kb_files" ]]; then
 fi
 
 say ""
+if [[ $WORDLIST -ne 1 ]]; then
+  warn "本语言（$DOC_LANG）没有词表，以下检查**未实现**，不是通过："
+  warn "  A 正文历史陈述（原为 / 曾经 / 已废弃 …）"
+  warn "  D kb 的上下文指代与自指称呼"
+  warn "  I 文风（翻译腔 / 古风腔 / 过度解释）"
+  howto "要补就在 scripts/doc-lint.sh 的 PATTERNS 与 ctx/self 里加本语言的词表，" \
+        "并在 scripts/fixtures/doc-lint/ 下配该语言的红样本与踩边界的绿样本。" \
+        "在那之前这两类违规不会被拦——绿灯不代表这两条验过了。"
+fi
 if [[ $fails -gt 0 || $reffails -gt 0 || $numfails -gt 0 ]]; then
-  bad "文档铁律检查失败：$fails 个文件违规、$reffails 处编号引用无定义、$numfails 处编号定义/引用不合规（检查 $checked，跳过 $skipped）"
+  bad "文档铁律检查失败：$fails 个文件违规、$reffails 处编号引用无定义、$numfails 处编号定义/引用不合规（检查 $checked，跳过 $skipped）"   # gate-lint:summary
   exit 1
 fi
+warn "上下文指代与自指称呼这两条是**启发式**：只认句首或标点之后的常见说法，"
+warn "  「按本决策办」这种嵌在句中的漏得掉。绿不代表这两条穷举过了。"
 ok "文档铁律检查通过（检查 $checked，跳过 $skipped；DOC_LINT_VERBOSE=1 看全部）"

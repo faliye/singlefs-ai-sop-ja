@@ -1,55 +1,74 @@
 ---
 name: gate
-description: 跑 singlefs 的准入门禁。提交代码前、判断一个改动能不能收时用它——包含门禁各阶段的含义、怎么判读结果、哪些"失败"是环境问题而不是代码问题。
+description: singlefs の受入ゲートを走らせる。コードを提出する前、ある変更を受け取れるか判断するときに使う——各段階の意味、結果の判読、どの「失敗」がコードではなく環境の問題かを含む。
 ---
+<!-- generated-from: skills/gate/SKILL.md sha256:ddb124d130221b00203a98a87694cc171b7a11b8bc2293ed1afc007bc8e579f7 -->
 
-# 准入门禁
+# 受入ゲート
 
-规则在 `rules/show-me-test.md`。**这里写怎么跑、怎么判、哪些失败是假的。**
+規則は `rules/show-me-test.md`。**ここには走らせ方・判読の仕方・どの失敗が偽物かを書く。**
 
-## 跑
-
-```bash
-bash .claude/scripts/gate.sh          # 全套，提交前必跑
-bash .claude/scripts/check.sh         # 只跑格式/lint/构建/单测，快速反馈
-bash .claude/scripts/env.sh           # 只做环境自检
-GATE_BASE=<commit> bash .claude/scripts/gate.sh   # 指定 diff 基准
-```
-
-## 阶段与判读
-
-| 阶段 | 失败意味着 |
-|---|---|
-| 规范版本 | 项目的 `.singlefs-ai-sop-version` 和 singlefs-ai-sop 的 `VERSION` 不一致。**先读一遍规则变更**，再跑 `install.sh` 更新戳 |
-| 文档铁律 | 正文里混了历史陈述。按提示删掉并挪进「历史版本」节，见 `rules/doc-discipline.md` |
-| Show me test | 改了 `crates/*/src` 但没带测试。**这条不许绕过**，见 `rules/show-me-test.md` |
-| 构建与单测 | 真的坏了，或者 cargo 缺失 |
-
-## 未实现的阶段
-
-`gate.sh` 每次都会列出**尚未实现**的门禁阶段（模型对拍 / 崩溃点重放 / QEMU 压测）。
-
-**这不是提示噪音，是判读结果的必要前提**：门禁全绿只说明「文档合规 + 有测试 + 单测过」，
-**不构成任何崩溃一致性证据**。在崩溃点重放接进来之前，
-任何「写路径验证过了」的说法都是假的。
-
-## 常见假失败
-
-| 现象 | 真因 |
-|---|---|
-| 「没有检测到任何变更」 | 在默认分支上且工作区干净。门禁无对象可判，不是代码问题 |
-| 构建阶段报 cargo 缺失 | 环境问题。跑 `env.sh` 看全貌，装工具链后重跑 |
-| doc-lint 报了规则文档自己 | 该文件缺 `<!-- doc-lint:rule-definition -->` 标记 |
-| Show me test 说没测试，但确实写了 | 测试写在了 `crates/*/src/` 里且没用 `#[cfg(test)]`/`#[test]` 标注，脚本认不出来 |
-
-## 门禁自己也要能失败
-
-改了 `gate.sh` 或 `doc-lint.sh` 之后，**必须造一个应该被拦的输入验证它真的会红**：
+## 走らせる
 
 ```bash
-# 往某个 kb 文档正文里塞一句带历史陈述的话，确认 doc-lint 报错，再删掉
-echo "节点大小 16K（原为 4K）。" >> .claude/kb/decisions.md
-bash .claude/scripts/doc-lint.sh; echo "退出码 $? —— 应为 1"
-git checkout .claude/kb/decisions.md
+bash .claude/scripts/gate.sh          # 全部。提出前に必ず
+bash .claude/scripts/check.sh         # 書式/lint/ビルド/単体テストだけ。速い折り返し
+bash .claude/scripts/env.sh           # 環境自己検査だけ
+GATE_BASE=<commit> bash .claude/scripts/gate.sh   # diff の基準を指定
 ```
-按 `rules/show-me-test.md`，不能证明会红的检查等于没写。
+
+## 段階と判読
+
+| 段階 | 失敗が意味すること |
+|---|---|
+| 規範バージョン | プロジェクトの `.singlefs-ai-sop-version` と singlefs-ai-sop の `VERSION` が食い違う。**まず規則の変更を読み**、それから `install.sh` でスタンプを更新する |
+| ゲート自己検査 | どこかの拒否が対処を示していない（`bad` に `howto` が無い、`die` が一引数だけ） |
+| ゲート判別力 | 標本の判定が予期と違う——**ゲート自身が壊れている**。他より先にそれを直す |
+| shell 規律 | スクリプトがパターン一致でプロセスを殺している、またはサブシェル内の代入で値を外へ持ち出している |
+| 文書鉄則 | 本文に履歴記述が混ざっている、または kb の番号が簡称なしで引用されている。`rules/doc-discipline.md` を見る |
+| Show me test | `crates/*/src` を変えたのにテストが無い。**ここは迂回不可**。`rules/show-me-test.md` を見る |
+| ビルドと単体テスト | 本当に壊れているか、cargo が無い |
+| プロジェクト固有段階 | `.claude/gate.d/` のローカル検査が赤、または読めない |
+| LKMM | litmus の判定が宣言と食い違う、または Never に対になる対照群が無い |
+
+**SOP リポジトリ自身でしか走らない段階が二つ**（利用側プロジェクトからは見えない）：
+各言語同期、バージョン規律。
+
+「規則マニフェスト」は両側で走るが、問う内容が違う。SOP リポジトリ内では
+「マニフェストが規則と歩調を合わせているか」を問い、プロジェクト内では
+**入れた副本そのもの**を突き合わせる——副本が改変されたり不完全だったりすれば赤になる。
+
+## よくある偽の失敗
+
+| 現象 | 本当の原因 |
+|---|---|
+| Show me test が「判定対象なし」と言う | 作業ツリーが基準と同じ。**通過でも失敗でもない**。変更してから再実行するか `GATE_BASE=<ref>` で基準を指定する |
+| 「上流より古いかは未確認」 | 上流リポジトリが兄弟ディレクトリに無い。この項目は**確認できなかった**もので、集約に別立てで並ぶ——通過と読まないこと |
+| ビルド段階が cargo 不在と言う | 環境の問題。`env.sh` で全体を見て、ツールチェーンを入れて再実行 |
+| doc-lint が規則文書自身を指摘する | そのファイルに `<!-- doc-lint:rule-definition -->` が無い |
+| Show me test がテスト無しと言うが確かに書いた | テストが `crates/*/src/` の中にあって `#[cfg(test)]`/`#[test]` が付いておらず、スクリプトから見えない |
+
+## ゲート自身も失敗できなければならない
+
+`gate.sh` や `doc-lint.sh` を変えたら、**止められるべき入力を作って本当に赤くなるか確かめる**：
+
+```bash
+# 拒否されるべき標本を作り、doc-lint に食わせて赤くなることを確かめる
+d=$(mktemp -d); mkdir -p "$d/kb"
+printf '# 決定\n\nノードサイズは 16K（以前は 4K）。\n\n## 改訂履歴\n\n### 2026-01-01\n- 作成。\n' \
+  > "$d/kb/decisions.md"
+bash .claude/singlefs-ai-sop/scripts/doc-lint.sh "$d"; echo "終了コード $? —— 1 のはず"
+rm -rf "$d"
+```
+
+⚠️ **標本は別のディレクトリに作ること。本物の kb ファイルの末尾に `>>` してはいけない。**
+追記した内容は「改訂履歴」見出しより後ろに落ち、本文走査はそこで既に止まっている——
+終了コードは 0 になり、「検査が何もしていない」ように見えるが、実際は標本を作る場所が
+間違っているだけである（監査でこの skill 自身の例に対して実測された）。
+
+検査を変えたら `bash .claude/singlefs-ai-sop/scripts/selftest.sh` も走らせる。
+`scripts/fixtures/` の標本を使って、各検査がまだ赤くなれることを証明する。
+**検査を一つ足したら標本も一つ足す。** その `want=` にはその検査自身のメッセージを書く——
+複数の検査が共有する断片では何も見張れない（`rules/show-me-test.md`）。
+
+`rules/show-me-test.md` に従い、赤くなることを示せない検査は書いていないのと同じである。

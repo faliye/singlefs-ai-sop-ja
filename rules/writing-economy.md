@@ -1,4 +1,4 @@
-<!-- generated-from: rules/writing-economy.md sha256:23f7aceafca5ace70edeb04733c525b4aeec458227ffc71339873f071a2fe4d4 -->
+<!-- generated-from: rules/writing-economy.md sha256:2af558e3574ccb016b80d85981c0cfd214604dcf922356530adb23d889807e48 -->
 <!-- doc-lint:rule-definition -->
 # 説明の長さは変更の重さに見合わせる
 

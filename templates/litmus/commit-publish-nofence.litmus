@@ -1,14 +1,15 @@
 C commit-publish-nofence
+(* generated-from: templates/litmus/commit-publish-nofence.litmus sha256:36612e17783195285eacde277c48fc2aca78aeb9c6ee64935b0359cafde531f3 *)
 
 (*
- * commit-publish 的对照组：去掉屏障。
+ * commit-publish の対照群：バリアを外したもの。
  *
- * 它存在的唯一目的是**证明 commit-publish.litmus 有判别力**——
- * 如果这一份也判 Never，说明这个模式本来就撞不上，
- * 那么 commit-publish 判 Never 就什么都没证明。
+ * 存在理由はただ一つ、**commit-publish.litmus に判別力があることを示す**ためである——
+ * こちらも Never と判定されるなら、そのパターンは元々当たらないということであり、
+ * commit-publish が Never でも何も示していないことになる。
  *
- * 按 rules/show-me-test.md：不能证明会红的检查等于没写。
- * 对照组就是这条规则在内存序上的形态。
+ * rules/show-me-test.md に従えば：赤くなることを示せない検査は書いていないのと同じ。
+ * 対照群は、その規則をメモリ順序の上で形にしたものである。
  *
  * singlefs-expect: Sometimes
  *)

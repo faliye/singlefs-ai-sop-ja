@@ -1,4 +1,4 @@
-<!-- generated-from: rules/doc-discipline.md sha256:0564dc04d2c7287b8899b7053f1b760cea1ec656feafd8f53c623c221e2c02f4 -->
+<!-- generated-from: rules/doc-discipline.md sha256:2ef4d8884d9a4fa13e604267e7a6f29a2c80d56aff83476f16aaf652c97b9f58 -->
 <!-- doc-lint:rule-definition -->
 # 文書規律：まずこの文書が誰のためのものかを見分ける
 

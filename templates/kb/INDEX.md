@@ -1,13 +1,14 @@
+<!-- generated-from: templates/kb/INDEX.md sha256:fe8831a1346b9723cb3e83e752cc2728ece711928baad96a8306e84512e64b7c -->
 # kb 索引
 
-**规则不进 kb，进 [singlefs-ai-sop/rules/](../singlefs-ai-sop/CLAUDE.md)。**
-kb 只放事实、决策、调研、实测数据。
+**規則は kb に入れない。[singlefs-ai-sop/rules/](../singlefs-ai-sop/CLAUDE.md) に入れる。**
+kb には事実・判断・調査・実測値だけを置く。
 
-| 文件 | 内容 |
+| ファイル | 内容 |
 |---|---|
-| [decisions.md](decisions.md) | 设计决策：定了什么、为什么、还没定什么 |
-| [experiments.md](experiments.md) | 实验记录：问题、先写死的判据、对照与变异、复跑命令 |
-| [invariants.md](invariants.md) | 不变量清单。checker 是它的可执行形式 |
-| [prior-art.md](prior-art.md) | 他家方案调研，含来源与口径 |
-| [pitfalls.md](pitfalls.md) | 避坑清单。每做一个设计决定回来对一遍 |
-| [checks-owed.md](checks-owed.md) | 欠的检查：知道要拦什么但还拦不了的，含前置 |
+| [decisions.md](decisions.md) | 設計判断：何が決まり、なぜ決まり、何がまだ決まっていないか |
+| [experiments.md](experiments.md) | 実験記録：問い、先に決め打った判定基準、対照と変異、再実行コマンド |
+| [invariants.md](invariants.md) | 不変条件リスト。checker がその実行可能な形 |
+| [prior-art.md](prior-art.md) | 他実装の調査。出典と計測条件つき |
+| [pitfalls.md](pitfalls.md) | 落とし穴一覧。設計判断のたびに照合しに戻る |
+| [checks-owed.md](checks-owed.md) | 借りている検査：止めたいと分かっているがまだ止められないもの。前提つき |

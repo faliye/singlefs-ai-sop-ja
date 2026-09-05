@@ -1,4 +1,4 @@
-<!-- generated-from: rules/session-wrapup.md sha256:9293d16e0dc85c2c2eaef44e2447ce93a47bc8071a5de5310f652f014dfcd342 -->
+<!-- generated-from: rules/session-wrapup.md sha256:85f86389c82db356c984945a8a6b90bbd6d198a91a30e1bf8f3022050bae3917 -->
 <!-- doc-lint:rule-definition -->
 # 締め：毎回の作業の終わりに必ず行うこと
 
@@ -32,7 +32,8 @@
 どこを直すかは、それが何を扱っているかで決める：
 
 - **協働を扱う**（証拠、文書、決定の置き場所、ゲートの返し方）
-  → singlefs-ai-sop（`rules/` / `skills/` / `scripts/`）を直し、`VERSION` を上げる
+  → singlefs-ai-sop を直し、`VERSION` を上げる
+  （どのパスで上げる必要があるかは `scripts/version-discipline.sh` の `GOVERNED`）
 - **ファイルシステムの設計を扱う** → プロジェクト側の `kb/`、`.claude/rules/`、
   またはプロジェクトの `CLAUDE.md` を直す
 

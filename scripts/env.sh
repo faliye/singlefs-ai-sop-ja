@@ -37,7 +37,7 @@ else
 fi
 
 if [[ $missing -gt 0 ]]; then
-  bad "环境自检失败：$missing 项缺失"
+  bad "环境自检失败：$missing 项缺失"   # gate-lint:summary
   exit 1
 fi
 ok "环境自检通过"

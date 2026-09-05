@@ -26,6 +26,9 @@
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 ROOT="${1:-$(project_root)}"
+# 绝对化：失败信息里的 rel 要靠 ${f#$ROOT/} 剥前缀，而 FILES 是 readlink -f 出来的绝对路径。
+# ROOT 是相对路径时剥不掉，报出来的就是一长串绝对路径——看的人得自己找哪一段是项目内路径。
+[[ -d "$ROOT" ]] && ROOT="$(cd "$ROOT" && pwd)"
 LITMUS_DIR="$ROOT/litmus"
 KTREE="${SINGLEFS_KERNEL_TREE:-}"
 
@@ -69,7 +72,7 @@ for f in "${FILES[@]}"; do
            fails=$((fails+1)); }
   done
 done
-[[ $fails -eq 0 ]] || { bad "静态检查未过：$fails 项"; exit 1; }
+[[ $fails -eq 0 ]] || { bad "静态检查未过：$fails 项"; exit 1; }   # gate-lint:summary
 
 # ── 每条 Never 都要有自己的对照组 ──
 n_never=0; n_some=0
@@ -95,7 +98,7 @@ for f in "${FILES[@]}"; do
     fails=$((fails+1))
   fi
 done
-[[ $fails -eq 0 ]] || { bad "对照组检查未过：$fails 项"; exit 1; }
+[[ $fails -eq 0 ]] || { bad "对照组检查未过：$fails 项"; exit 1; }   # gate-lint:summary
 
 # ── herd7 ──
 if ! command -v herd7 >/dev/null 2>&1 && command -v opam >/dev/null 2>&1; then
@@ -169,5 +172,5 @@ for f in "${FILES[@]}"; do
 done
 
 say ""
-[[ $fails -eq 0 ]] || { bad "LKMM 未通过：$fails 项"; exit 1; }
+[[ $fails -eq 0 ]] || { bad "LKMM 未通过：$fails 项"; exit 1; }   # gate-lint:summary
 ok "LKMM 通过（$n_never 条 Never，每条都有配对对照；共 $n_some 条 Sometimes）"

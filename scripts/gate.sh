@@ -11,7 +11,8 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${1:-$(project_root)}"
-[[ -d "$ROOT" ]] || die "找不到项目根"
+[[ -d "$ROOT" ]] || die "找不到项目根：$ROOT" \
+  "在项目根跑，或把它作为第一个参数传进来： bash .claude/scripts/gate.sh <项目根>"
 cd "$ROOT"
 
 STAGES=(); RESULTS=(); NOT_RUN=()
@@ -26,7 +27,7 @@ run_stage() { # run_stage <名称> <命令...>
 
 # ── 阶段 0：规范版本一致性 ───────────────────────────────
 head1 "规范版本"
-# 版本戳是给消费项目用的；SOP 仓自身没有也不该有。判据同「三语同步」：
+# 版本戳是给消费项目用的；SOP 仓自身没有也不该有。判据同「各语言同步」：
 # 被门禁的 ROOT 是不是 SOP 仓本身。
 if [[ "$(cd "$ROOT" && pwd)" == "$(cd "$SCRIPTS/.." && pwd)" ]]; then
   ok "本仓即 SOP 本身，无需版本戳"
@@ -69,6 +70,10 @@ elif [[ -z "$up_ver" ]]; then
   warn "未检查副本是否落后上游：兄弟目录里没找到上游仓"
   howto "上游仓不在兄弟目录时这一项查不了，属于**未检查**不是通过。" \
         "要查就把上游 clone 到 $(cd "$ROOT/.." 2>/dev/null && pwd)/$fam-<语言> 再跑。"
+  # 只在这里 warn 一句是不够的：末尾汇总会报「N 个阶段全部通过」，
+  # 而这一项既不在通过列表里也不在未跑列表里——它就这么从结论里消失了
+  # （本轮审计实测）。设计原则第 1 条要求显式报告，汇总才是人会看的那一处。
+  NOT_RUN+=("副本与上游同版本    本次未检查：兄弟目录里没有上游仓。clone 到 $(cd "$ROOT/.." 2>/dev/null && pwd)/$fam-<语言> 再跑")
 elif [[ "$up_ver" != "$pkg_ver" ]]; then
   bad "副本落后上游：副本 $pkg_ver，上游 $up_ver（$up_dir）"
   howto "副本是拷贝不是链接，上游抬了版本副本不会自己跟。" \
@@ -82,10 +87,16 @@ fi
 fi
 
 # ── 阶段 0b：门禁自身（每条拒绝都要给出路）──────────────
-run_stage "门禁自检" bash "$SCRIPTS/gate-lint.sh"
+# 项目本地阶段（.claude/gate.d/）也交给两个 lint：它们和共享阶段一样会拒绝提交者，
+# 而此前一条都没被查过——一喂就是 7 条没有出路的拒绝（singlefs 实测）。
+LINT_EXTRA=(); [[ -d "$ROOT/.claude/gate.d" ]] && LINT_EXTRA=("$ROOT/.claude/gate.d")
+run_stage "门禁自检" bash "$SCRIPTS/gate-lint.sh" "${LINT_EXTRA[@]}"
 # 每条拒绝有没有出路是一回事，检查本身红不红得起来是另一回事。
 # 后者靠样本证明（rules/sop-first.md：没有自检能力的门禁是摆设）。
 run_stage "门禁判别力" bash "$SCRIPTS/selftest.sh"
+# command-safety.md 里可机检的那几条：按模式匹配杀进程、子 shell 赋值往外带值。
+# 以前它们只是文档里的提醒句，而本仓自己的 qemu/run.sh 违反了其中一条整整一轮。
+run_stage "shell 纪律" bash "$SCRIPTS/shell-lint.sh" "${LINT_EXTRA[@]}"
 
 # ── 阶段 1：文档铁律 ────────────────────────────────────
 run_stage "文档铁律" bash "$SCRIPTS/doc-lint.sh" "$ROOT"
@@ -127,7 +138,7 @@ if [[ -d "$SCRIPTS/../rules" && -f "$SCRIPTS/manifest.sh" ]]; then
   # 译文同步是 SOP 仓自己的事，消费项目那边没有兄弟语言仓，不该判它。
   # 判据：被门禁的这个 ROOT 是不是 SOP 仓本身。
   if [[ -f "$SCRIPTS/../I18N" && "$(cd "$ROOT" && pwd)" == "$(cd "$SCRIPTS/.." && pwd)" ]]; then
-    run_stage "三语同步" bash "$SCRIPTS/i18n-sync.sh"
+    run_stage "各语言同步" bash "$SCRIPTS/i18n-sync.sh"
   fi
   # 版本纪律同理只判 SOP 仓自身：改了规范本体就必须抬 VERSION——
   # 以前这条只是 CLAUDE.md 里的提醒句，拦不住（对抗测试实测）。
@@ -194,7 +205,7 @@ fi
 NOT_IMPL=(
   "模型对拍          需要 checker 与实现存在（rules/test-discipline.md）"
   "崩溃点重放        需要块层写记录 + checker（rules/test-discipline.md）"
-  "QEMU 真实负载     harness 已就绪并自检通过，缺被测对象（kb/decisions.md D4/D8）"
+  "QEMU 真实负载     harness 已就绪并自检通过，缺被测对象（盘上格式定案，见项目 kb/decisions.md）"
 )
 
 # ── 汇总 ────────────────────────────────────────────────
@@ -216,8 +227,15 @@ for s in "${NOT_IMPL[@]}"; do warn "$s"; done
 
 say ""
 if [[ $failed -gt 0 ]]; then
-  bad "门禁未通过：$failed 个阶段失败"
+  bad "门禁未通过：$failed 个阶段失败"   # gate-lint:summary
   exit 1
+fi
+# 记下「门禁在这里通过过」。下一轮的 diff 基准优先取它——
+# 判据因此变成规则原本那句话：**上次过闸之后的所有改动都要过闸**，
+# 而不是「最近一个 commit 里有没有」。没有这个标记时窗口只有一格，
+# 分两次提交就能把改代码的那次挤出去（对抗测试实测，gate 退出码 0）。
+if git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+  git -C "$ROOT" update-ref refs/singlefs/gate-ok HEAD 2>/dev/null || true
 fi
 ok "已实现的门禁阶段全部通过（共 ${#STAGES[@]} 个）"
 warn "Gate proves evidence requirements, not semantic correctness."
