@@ -1,4 +1,4 @@
-<!-- generated-from: CLAUDE.md sha256:486d6196426c2e69eb62b59bc7a69bfbf427d082ea5eb3a10a7c27cfe6bd64e8 -->
+<!-- generated-from: CLAUDE.md sha256:edb9e9137bfd57cb766fcd0d69fbe430e88ce200f90ac801796dd2da33e12223 -->
 <!-- doc-lint:rule-definition -->
 # singlefs-ai-sop-ja
 
@@ -41,6 +41,7 @@
 @rules/test-discipline.md
 @rules/evidence-discipline.md
 @rules/verify-before-claiming.md
+@rules/pushback-discipline.md
 @rules/command-safety.md
 @rules/writing-economy.md
 @rules/writing-style.md
