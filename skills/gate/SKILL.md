@@ -2,7 +2,7 @@
 name: gate
 description: singlefs の受入ゲートを走らせる。コードを提出する前、ある変更を受け取れるか判断するときに使う——各段階の意味、結果の判読、どの「失敗」がコードではなく環境の問題かを含む。
 ---
-<!-- generated-from: skills/gate/SKILL.md sha256:d8dfc227593ec167b91970931e06b400853b9bc2f9c980a4ecd1879c6a6c3469 -->
+<!-- generated-from: skills/gate/SKILL.md sha256:786e9e234520fcd537261a43d8490e2d2dc6a31410bfbc05b33d93782b554cad -->
 
 # 受入ゲート
 
@@ -25,9 +25,10 @@ GATE_BASE=<commit> bash .claude/scripts/gate.sh   # diff の基準を指定
 | ゲート自己検査 | どこかの拒否が対処を示していない（`bad` に `howto` が無い、`die` が一引数だけ） |
 | ゲート判別力 | 標本の判定が予期と違う——**ゲート自身が壊れている**。他より先にそれを直す |
 | shell 規律 | スクリプトがパターン一致でプロセスを殺している、またはサブシェル内の代入で値を外へ持ち出している |
-| 文書鉄則 | 本文に履歴記述が混ざっている、または kb の番号が簡称なしで引用されている。`rules/doc-discipline.md` を見る |
+| 文書鉄則 | 本文に履歴記述が混ざっている、kb の番号が簡称なしで引用されている、または CLAUDE.md が規則を一条ずつ `@` していない。`rules/writing-discipline.md` を見る |
+| 命名規律 | `.rs` で自前に宣言した名前が一文字かよくある略語である、または `.claude/abbreviations`・`.claude/naming-lint-exclude` の書き方が不正。`rules/code-discipline.md` を見る |
 | Show me test | `crates/*/src` を変えたのにテストが無い。**ここは迂回不可**。`rules/show-me-test.md` を見る |
-| ビルドと単体テスト | 本当に壊れているか、cargo が無い |
+| ビルドと単体テスト | 本当に壊れているか、cargo が無い。clippy は `-D warnings` で判定し、閉じた集合の列挙型に `_ =>` を書くことも拒む |
 | プロジェクト固有段階 | `.claude/gate.d/` のローカル検査が赤、または読めない |
 | LKMM | litmus の判定が宣言と食い違う、または Never に対になる対照群が無い |
 

@@ -2,11 +2,11 @@
 name: decide
 description: singlefs の設計判断を記録・変更する。判断を決めるとき、既存の判断を覆すとき、ある選択が他の判断へ連鎖すると気づいたときに使う——記録の書式、状態遷移、不変条件リストと checker との同期要件を含む。
 ---
-<!-- generated-from: skills/decide/SKILL.md sha256:b1fc2afb7ea3e8c795b4bb4bc68ed0b40c7ccca72fa60782745b1e291e4b5040 -->
+<!-- generated-from: skills/decide/SKILL.md sha256:6496997e3ab634f94b12e927cb3f35da6960b395c09e61058196d28a4944e6ba -->
 
 # 設計判断を一件記録する
 
-規則は `rules/doc-discipline.md`、およびプロジェクト側の書式・構造進化に関する規則（あれば）。
+規則は `rules/kb-discipline.md`、およびプロジェクト側の書式・構造進化に関する規則（あれば）。
 
 ## 状態は三つだけ
 

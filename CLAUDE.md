@@ -1,4 +1,4 @@
-<!-- generated-from: CLAUDE.md sha256:f210a793326df955839a6faa645e0cd7f52b10d5053715166391540fd1d59850 -->
+<!-- generated-from: CLAUDE.md sha256:b9c235621f2b1c5ef27936bf21265d4f1b713207445f7e8a9cbf7f1418905059 -->
 <!-- doc-lint:rule-definition -->
 # singlefs-ai-sop-ja
 
@@ -37,7 +37,8 @@
 @rules/sop-first.md
 @rules/show-me-test.md
 @rules/machine-first.md
-@rules/doc-discipline.md
+@rules/code-discipline.md
+@rules/writing-discipline.md
 @rules/design-doc-discipline.md
 @rules/kb-discipline.md
 @rules/test-discipline.md
@@ -45,8 +46,6 @@
 @rules/verify-before-claiming.md
 @rules/pushback-discipline.md
 @rules/command-safety.md
-@rules/writing-economy.md
-@rules/writing-style.md
 @rules/session-wrapup.md
 
 ## 切り分けの判定基準

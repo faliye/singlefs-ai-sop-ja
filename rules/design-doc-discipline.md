@@ -1,4 +1,4 @@
-<!-- generated-from: rules/design-doc-discipline.md sha256:962f3ded4ea41b3189ba68e75e77e8c59e0404c3017f7fca424cccf87e6154ed -->
+<!-- generated-from: rules/design-doc-discipline.md sha256:4711d347e35efac603f0bef8ed2a2ad58de58fca5bd2f33f39a528424c0923c1 -->
 <!-- doc-lint:rule-definition -->
 # 設計文書の鉄則
 
@@ -44,7 +44,7 @@
 
 ## 2. 長さは変更の重さに見合わせる
 
-判定基準も物差しも `writing-economy.md` にある。ここには写さない。
+判定基準も物差しも `writing-discipline.md` の「長さは変更の重さに見合わせる」の節にある。ここには写さない。
 
 ## 3. 説得すべきところは、きちんと説得する
 

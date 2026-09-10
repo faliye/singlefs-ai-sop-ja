@@ -1,4 +1,4 @@
-<!-- generated-from: templates/CLAUDE.project.md sha256:64d43f9ae51f9eb8988adbeab22381e802f7aef2d69bcb6e772709910e7939d5 -->
+<!-- generated-from: templates/CLAUDE.project.md sha256:0344edca522bad91dc47e1b1471194004a25d7ea7463b5b3498fdf88111a3cd3 -->
 # <プロジェクト名>
 
 <三〜五行：このプロジェクトが何か、今どのマイルストーンか、singlefs 本線とどういう関係か。
@@ -10,15 +10,15 @@
 @.claude/singlefs-ai-sop/rules/sop-first.md
 @.claude/singlefs-ai-sop/rules/show-me-test.md
 @.claude/singlefs-ai-sop/rules/machine-first.md
-@.claude/singlefs-ai-sop/rules/doc-discipline.md
+@.claude/singlefs-ai-sop/rules/code-discipline.md
+@.claude/singlefs-ai-sop/rules/writing-discipline.md
 @.claude/singlefs-ai-sop/rules/design-doc-discipline.md
 @.claude/singlefs-ai-sop/rules/kb-discipline.md
 @.claude/singlefs-ai-sop/rules/test-discipline.md
 @.claude/singlefs-ai-sop/rules/evidence-discipline.md
 @.claude/singlefs-ai-sop/rules/verify-before-claiming.md
+@.claude/singlefs-ai-sop/rules/pushback-discipline.md
 @.claude/singlefs-ai-sop/rules/command-safety.md
-@.claude/singlefs-ai-sop/rules/writing-economy.md
-@.claude/singlefs-ai-sop/rules/writing-style.md
 @.claude/singlefs-ai-sop/rules/session-wrapup.md
 
 **ファイルシステム設計に固有の規則**（トランザクション、クラッシュ一貫性、ディスク書式の類）は
@@ -56,6 +56,7 @@ bash .claude/scripts/lkmm.sh          # メモリ順序（herd7 + litmus/）
 bash .claude/scripts/qemu.sh --selftest    # QEMU harness 自己検査
 bash .claude/scripts/gate-lint.sh     # ゲート自身：拒否のすべてが次の一手を示しているか
 bash .claude/scripts/shell-lint.sh    # shell 規律：パターン一致での kill、サブシェルからの値の持ち出し
+bash .claude/scripts/naming-lint.sh   # 命名規律：.rs の一文字名とよくある略語
 bash .claude/scripts/env.sh           # 環境自己検査
 ```
 
