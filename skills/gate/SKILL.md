@@ -2,7 +2,7 @@
 name: gate
 description: singlefs の受入ゲートを走らせる。コードを提出する前、ある変更を受け取れるか判断するときに使う——各段階の意味、結果の判読、どの「失敗」がコードではなく環境の問題かを含む。
 ---
-<!-- generated-from: skills/gate/SKILL.md sha256:ddb124d130221b00203a98a87694cc171b7a11b8bc2293ed1afc007bc8e579f7 -->
+<!-- generated-from: skills/gate/SKILL.md sha256:d8dfc227593ec167b91970931e06b400853b9bc2f9c980a4ecd1879c6a6c3469 -->
 
 # 受入ゲート
 
@@ -31,8 +31,8 @@ GATE_BASE=<commit> bash .claude/scripts/gate.sh   # diff の基準を指定
 | プロジェクト固有段階 | `.claude/gate.d/` のローカル検査が赤、または読めない |
 | LKMM | litmus の判定が宣言と食い違う、または Never に対になる対照群が無い |
 
-**SOP リポジトリ自身でしか走らない段階が二つ**（利用側プロジェクトからは見えない）：
-各言語同期、バージョン規律。
+**SOP リポジトリ自身でしか走らない段階が三つ**（利用側プロジェクトからは見えない）：
+各言語同期、バージョン規律、CHANGELOG 連続性。
 
 「規則マニフェスト」は両側で走るが、問う内容が違う。SOP リポジトリ内では
 「マニフェストが規則と歩調を合わせているか」を問い、プロジェクト内では

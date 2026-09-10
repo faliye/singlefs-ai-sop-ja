@@ -1,4 +1,4 @@
-<!-- generated-from: CLAUDE.md sha256:edb9e9137bfd57cb766fcd0d69fbe430e88ce200f90ac801796dd2da33e12223 -->
+<!-- generated-from: CLAUDE.md sha256:f210a793326df955839a6faa645e0cd7f52b10d5053715166391540fd1d59850 -->
 <!-- doc-lint:rule-definition -->
 # singlefs-ai-sop-ja
 
@@ -11,6 +11,8 @@
 上げなければプロジェクト側のゲートがバージョン不一致を報告する。
 **どのパスが「規範本体」かは `scripts/version-discipline.sh` の `GOVERNED` を正とする**
 ——一覧はそこ一箇所だけで、ここには写さない。
+上げたら `CHANGELOG.md` の先頭にその版の節を書く——一版一節、番号は飛ばさない。
+判定は `scripts/changelog-lint.sh` が行う。
 
 ## 対話言語
 
