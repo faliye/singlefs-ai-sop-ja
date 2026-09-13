@@ -1,4 +1,4 @@
-<!-- generated-from: rules/evidence-discipline.md sha256:79c581ae395c51d70708ccc6885d6ff5f4aee4d08d3ad93e421a1b1417c6cdd6 -->
+<!-- generated-from: rules/evidence-discipline.md sha256:e7667534faabe3f5d9e32baae729a67af3aee0888528f85a8fcd4c7db52cf1ba -->
 <!-- doc-lint:rule-definition -->
 # すべての結論には三つの導出を要する：順推 / 逆推 / 照合
 
@@ -61,7 +61,7 @@
 
 だからプロンプトを直すなら再実行と一緒にしか直せない。説明を足したければ別のファイルを起こし、原本には触らない。
 
-⇒ **門番もこの種のディレクトリを避けなければならない。** 原本を直しに戻れと要求する検査が生むのは二つの結末だけである：
+⇒ **ゲートもこの種のディレクトリを避けなければならない。** 原本を直しに戻れと要求する検査が生むのは二つの結末だけである：
 証拠の鎖が切れるか、その検査ごと迂回されるか——どちらも検査しないより悪い。
 `scripts/doc-lint.sh` はこの一覧をプロジェクト根の `.claude/doc-lint-exclude` から読む。
 一行に一件、**それぞれ理由を書くこと**。存在しないディレクトリを指す項目、
