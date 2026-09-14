@@ -1,5 +1,5 @@
 C commit-publish
-(* generated-from: templates/litmus/commit-publish.litmus sha256:92dbb6cf8bffde98d1dc7ebc6abeb709995af663f2406e3ed7c9d4c61272cd21 *)
+(* generated-from: templates/litmus/commit-publish.litmus sha256:15d1491bb05768658df3fc4dc55bbc20232a2c332e228bc4a23b17140717c6e6 *)
 
 (*
  * トランザクション・コミットの公開順序：先に新しいブロックの内容を書き、
@@ -14,6 +14,9 @@ C commit-publish
  * P0 = 書き手（トランザクションをコミットする）。P1 = 読み手（マウント、または並行読み）。
  *
  * singlefs-expect: Never
+ * singlefs-models: none —— テンプレート：Never と対照群の組み方を示すだけで、どのコードにも対応しない。
+ *   この順序を実装するコードをプロジェクトが書いたら、この行を <リポジトリ内パス>::<関数名> に替え、
+ *   このファイルを読むテストを書く。
  *)
 
 {}

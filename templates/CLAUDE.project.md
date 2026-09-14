@@ -1,4 +1,4 @@
-<!-- generated-from: templates/CLAUDE.project.md sha256:0344edca522bad91dc47e1b1471194004a25d7ea7463b5b3498fdf88111a3cd3 -->
+<!-- generated-from: templates/CLAUDE.project.md sha256:dc968fc6666a7150e3c25cf114f2c07e430a3e20c0812fc944fbc5c6c3157485 -->
 # <プロジェクト名>
 
 <三〜五行：このプロジェクトが何か、今どのマイルストーンか、singlefs 本線とどういう関係か。
@@ -49,11 +49,9 @@
 
 ```bash
 bash .claude/scripts/gate.sh          # 受入ゲート。提出前に必ず
-GATE_QEMU=1 bash .claude/scripts/gate.sh   # さらに QEMU harness 自己検査を加える
 
 bash .claude/scripts/check.sh         # 速い折り返し（書式/lint/ビルド/単体テスト）
-bash .claude/scripts/lkmm.sh          # メモリ順序（herd7 + litmus/）
-bash .claude/scripts/qemu.sh --selftest    # QEMU harness 自己検査
+bash .claude/scripts/lkmm.sh          # メモリ順序（herd7 + litmus/。Never ごとに対照群とコードへの結びつけが要る）
 bash .claude/scripts/gate-lint.sh     # ゲート自身：拒否のすべてが次の一手を示しているか
 bash .claude/scripts/shell-lint.sh    # shell 規律：パターン一致での kill、サブシェルからの値の持ち出し
 bash .claude/scripts/naming-lint.sh   # 命名規律：.rs の一文字名とよくある略語
