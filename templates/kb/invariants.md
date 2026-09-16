@@ -1,4 +1,4 @@
-<!-- generated-from: templates/kb/invariants.md sha256:61cdf75db8550ec3b4edf6b0059d27abaac24744d47bdb6917777728dbe030d4 -->
+<!-- generated-from: templates/kb/invariants.md sha256:09660ba6411d31a65954eaab1da5625b297a62e404096e6b47db3f23b04f198f -->
 # 不変条件リスト
 
 **checker は `invariants.md` の実行可能な形である。** ここに一条足すたび、checker にも
@@ -11,7 +11,7 @@
 
 **番号は索引であって呼び名ではない**：不変条件はそれぞれ簡称を持ち、他所からの引用は
 `<番号>（簡称）` と書く。
-`doc-lint.sh` が強制する（`singlefs-ai-sop/rules/kb-discipline.md` 第 5 条）。
+`doc-lint.sh` が強制する（`../singlefs-ai-sop/rules/kb-discipline.md` 第 5 条）。
 
 <!-- doc-lint:registry name-col=2 -->
 

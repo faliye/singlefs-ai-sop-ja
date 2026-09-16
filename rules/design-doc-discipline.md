@@ -1,4 +1,4 @@
-<!-- generated-from: rules/design-doc-discipline.md sha256:4711d347e35efac603f0bef8ed2a2ad58de58fca5bd2f33f39a528424c0923c1 -->
+<!-- generated-from: rules/design-doc-discipline.md sha256:c03cce7099e37680088ed730cb3d27c98abfd78261338099870e2cc291ab8fa4 -->
 <!-- doc-lint:rule-definition -->
 # 設計文書の鉄則
 
@@ -40,7 +40,7 @@
 履歴は `CHANGELOG.md` へ外出しする——
 これらは作業のたびに通読する規則であり、履歴が混ざると薄まるからである。
 
-`scripts/doc-lint.sh` が強制する。
+本文中の履歴記述と履歴節の位置は `scripts/doc-lint.sh` が強制するが、見るのは `.md` だけである。コードコメントの条はレビューに頼る。
 
 ## 2. 長さは変更の重さに見合わせる
 

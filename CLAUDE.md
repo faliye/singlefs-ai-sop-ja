@@ -1,4 +1,4 @@
-<!-- generated-from: CLAUDE.md sha256:ccefa39750d9a4fb30ad5202f4905b79649cb56c6d95ff0959df399e2e5b7879 -->
+<!-- generated-from: CLAUDE.md sha256:2ed859d0a1c739a0d101b2425a2e482021a2b226e2107fef64da7f833a541324 -->
 <!-- doc-lint:rule-definition -->
 # singlefs-ai-sop-ja
 
@@ -29,7 +29,11 @@
 **プッシュはフックを通し、すべての言語リポジトリを一緒に検証して一緒にプッシュする。** 各言語リポジトリで一度ずつ
 `git config core.hooksPath scripts/githooks` を実行する。以後どのリポジトリで `git push` しても、まずすべての言語リポジトリを
 検証し（master 上、作業ツリーがクリーン、VERSION が同じ、ゲートが緑）、すべて通ったときだけまとめてプッシュする。
-やり方は `scripts/push-all.sh` を参照。
+やり方は `scripts/push-all.sh` を参照。master 以外の ref（フィーチャーブランチ、タグ）を押してもこれは起動せず、
+指定した ref だけがプッシュされる。
+
+⚠️ **この経路を `git push --dry-run` で試してはいけない**：フックからは `--dry-run` かどうかが見えないため、
+master を押したその一回で他の二つの言語リポジトリが**実際に**プッシュされる。
 
 **何を翻訳し、何を原様のまま複製するか**の判定基準は一つだけ、
 「そこに人が読む散文が含まれているか」である。二つの一覧は

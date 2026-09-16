@@ -1,4 +1,4 @@
-<!-- generated-from: rules/engineering-philosophy.md sha256:0be2426b15bd92d9b142e18142e0abb13d0154de08fc9725202faa29df1fc588 -->
+<!-- generated-from: rules/engineering-philosophy.md sha256:2418a48eb7d03a4083d95e9595ea9aa9da6dae10fde6b37f0c3091e6dcb02e7e -->
 <!-- doc-lint:rule-definition -->
 # エンジニアリング理念
 
@@ -64,7 +64,7 @@
 | **経路数が有界であること** | このコードの制御フローを網羅するのに何ケース要るか？ 言えない、あるいは無限なら検証できない。**ネストの層数ではなく経路数である**——そしてこれは検証できるための必要条件であって、十分条件ではない |
 | 規約の一貫性 | 規約が揺れると機械検査が効かなくなる——「設計の統一性」とは別物なので混同しない |
 
-**判定基準は同じ一つ**：それは検証を容易にするのか、それとも人の目に優しいだけなのか。
+判定基準はやはり `machine-first.md` のあの一条である：この規則はコードを機械的に検証しやすくするのか、それとも人の目に優しくするだけなのか。
 表のこの四項はいずれも「検証を容易にする」ほうなので残す——ただし**理由は検証可能性と情報量に書き換え、
 もはや「可読性」にぶら下げない。**
 **コードにどう落とすかの細則は `code-discipline.md` にある**：名前は長さに上限なし、略語なし、一文字なし。
@@ -102,5 +102,5 @@
 | 面 | どこに置かれているか |
 |---|---|
 | 実装 | `machine-first.md`、`code-discipline.md`、`kb-discipline.md`、および各プロジェクト固有の設計規律 |
-| レビュー | `show-me-test.md` の howto 要件、`design-doc-discipline.md`、決定記録の根拠要件 |
+| レビュー | `sop-first.md` の howto 要件、`design-doc-discipline.md`、決定記録の根拠要件 |
 | 境界 | `show-me-test.md`「ゲートが証明できること・できないこと」 |

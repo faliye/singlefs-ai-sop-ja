@@ -1,4 +1,4 @@
-<!-- generated-from: templates/kb/checks-owed.md sha256:264069c9878b2fb21c88d0ec6af91be0a46e60ab8642ecf81ff3e61e725da9e7 -->
+<!-- generated-from: templates/kb/checks-owed.md sha256:4a03be119c2d1d9d54c79672ce2f7d63321de8230121c760a1de35ac9ca16fb8 -->
 # 借りている検査の一覧
 
 **`checks-owed.md` には「何を止めたいか既に分かっているが、今はまだ止められない」検査を置く。**
@@ -9,7 +9,7 @@ checker がその実行可能な形。`checks-owed.md` に置くのは**コー�
 
 **書き込む敷居**：「何を止めるか」「どう止めれば赤くなるか」「今は何が足りないか」を言えること。
 三つのうち一つでも欠けるならまだ整理できていないので、書かない
-（`singlefs-ai-sop/rules/sop-first.md`）。
+（`../singlefs-ai-sop/rules/sop-first.md`）。
 
 <!-- doc-lint:registry name-col=2 -->
 
