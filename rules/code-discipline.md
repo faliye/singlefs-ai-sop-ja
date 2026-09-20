@@ -1,4 +1,4 @@
-<!-- generated-from: rules/code-discipline.md sha256:25eadcaaea2f539c4914ad802a50d72b45021fde323ad3ce8d3fa9df8ea6b498 -->
+<!-- generated-from: rules/code-discipline.md sha256:18ead1973ba26425f0ed486a35ecedcb2137cb89b02f91f77dbe1f8bdcac7776 -->
 <!-- doc-lint:rule-definition -->
 # コーディング規律：machine-first の実施細則
 

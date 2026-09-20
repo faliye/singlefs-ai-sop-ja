@@ -1,4 +1,4 @@
-<!-- generated-from: rules/design-doc-discipline.md sha256:c03cce7099e37680088ed730cb3d27c98abfd78261338099870e2cc291ab8fa4 -->
+<!-- generated-from: rules/design-doc-discipline.md sha256:f277f9947819d76e8d8d2fcef88674583ace9ab71a18942cfe8e65e033afdee6 -->
 <!-- doc-lint:rule-definition -->
 # 設計文書の鉄則
 
@@ -36,9 +36,7 @@
   **今このコードがこうである理由**を指す → 残す。
   **もう存在しない旧版**を指す → 消す。
 
-`CLAUDE.md` と `rules/*.md` は**末尾の改訂履歴すら置かない。**
-履歴は `CHANGELOG.md` へ外出しする——
-これらは作業のたびに通読する規則であり、履歴が混ざると薄まるからである。
+`CLAUDE.md` と `rules/*.md` は別の鉄則に従う。`rules-discipline.md` を参照。
 
 本文中の履歴記述と履歴節の位置は `scripts/doc-lint.sh` が強制するが、見るのは `.md` だけである。コードコメントの条はレビューに頼る。
 

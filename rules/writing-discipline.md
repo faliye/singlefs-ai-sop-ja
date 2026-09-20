@@ -1,4 +1,4 @@
-<!-- generated-from: rules/writing-discipline.md sha256:cff66be6bda7e5ded054e9c094445ebaf875ec5ef15403a96f69e88559622e66 -->
+<!-- generated-from: rules/writing-discipline.md sha256:805c4dce4880e2b75b4fe5cf27182dfdc4f792c88740d442f852375d0c695904 -->
 <!-- doc-lint:rule-definition -->
 # 文章の規律
 
@@ -14,7 +14,7 @@
 |---|---|---|---|
 | **設計文書** | 人が通読する | 人に**同意**させ、**着手**させる | `design-doc-discipline.md` |
 | **エンジニアリング kb** | モデルが検索する | モデルに**作り話をさせない** | `kb-discipline.md` |
-| **規則** | 実行 | 失敗しうる検査に変えられること | `rules/`、`sop-first.md` を参照 |
+| **規則** | 実行 | 失敗しうる検査に変えられること | `rules-discipline.md` |
 
 書く前に問う：これは人が頭から読むものか、それともモデルが一条ずつ取り出すものか。
 答えが違えば書き方も違う。

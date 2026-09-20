@@ -1,4 +1,4 @@
-<!-- generated-from: CLAUDE.md sha256:2ed859d0a1c739a0d101b2425a2e482021a2b226e2107fef64da7f833a541324 -->
+<!-- generated-from: CLAUDE.md sha256:d8e17abafec00f8034b0f5964d8a7690485966d2e05b2f4b1b9c05c4f9d3a017 -->
 <!-- doc-lint:rule-definition -->
 # singlefs-ai-sop-ja
 
@@ -50,6 +50,7 @@ master を押したその一回で他の二つの言語リポジトリが**実�
 @rules/writing-discipline.md
 @rules/design-doc-discipline.md
 @rules/kb-discipline.md
+@rules/rules-discipline.md
 @rules/test-discipline.md
 @rules/evidence-discipline.md
 @rules/verify-before-claiming.md

@@ -1,4 +1,4 @@
-<!-- generated-from: rules/pushback-discipline.md sha256:43fdcf11dd0a4c6a70f6f9788e2dd19b7c76eb71ea11d7ee1e506298b240028d -->
+<!-- generated-from: rules/pushback-discipline.md sha256:845434dcc3d56805b5251391798a18b0e0dee3a90566362c8882d99c1d8013a6 -->
 <!-- doc-lint:rule-definition -->
 # 提案は、誰が出したかによって検査を免れない
 

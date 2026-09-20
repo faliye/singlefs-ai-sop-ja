@@ -1,8 +1,8 @@
-<!-- generated-from: agents/INDEX.md sha256:4ae652fd692ec2d89f4d71c38b7b2b79b924f43047f178013253bd484fc3ab5c -->
+<!-- generated-from: agents/INDEX.md sha256:469140a3d88e0740cdc316de689d0ddb321b208edc4b50342d6e7cff1013a3dd -->
 # 共有 subagent 定義
 
 **この層は統治下に入っているが、現在は空である。** 空は**状態**であって手落ちではない——
-明示して書くのは、「無い」と「忘れた」がディレクトリ上では見分けがつかないからである
+明示して書く。「無い」と「忘れた」はディレクトリ上では見分けがつかないからである
 （`rules/kb-discipline.md`：空白は誤りより危険）。
 
 ## この層に何を置くか

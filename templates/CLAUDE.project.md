@@ -1,4 +1,4 @@
-<!-- generated-from: templates/CLAUDE.project.md sha256:70ffe50855aa297b26bf0650a4c25efea645e8876b7d7d06bb6880ce768d3b79 -->
+<!-- generated-from: templates/CLAUDE.project.md sha256:e76f71b9d747bd7b1eed2f643de50fd189ba213831122b1bdfc2881af534b4f4 -->
 # <プロジェクト名>
 
 <三〜五行：このプロジェクトが何か、今どのマイルストーンか、singlefs 本線とどういう関係か。
@@ -14,6 +14,7 @@
 @.claude/singlefs-ai-sop/rules/writing-discipline.md
 @.claude/singlefs-ai-sop/rules/design-doc-discipline.md
 @.claude/singlefs-ai-sop/rules/kb-discipline.md
+@.claude/singlefs-ai-sop/rules/rules-discipline.md
 @.claude/singlefs-ai-sop/rules/test-discipline.md
 @.claude/singlefs-ai-sop/rules/evidence-discipline.md
 @.claude/singlefs-ai-sop/rules/verify-before-claiming.md
