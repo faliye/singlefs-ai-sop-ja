@@ -1,4 +1,4 @@
-<!-- generated-from: rules/command-safety.md sha256:9b027b70a29465e89c54624a2bb4991c6d830b74fa67341c1ebc3e0ce53c2d08 -->
+<!-- generated-from: rules/command-safety.md sha256:7b57794d1857e536050d6e5d4dfa429e3348702318081facf091c92c8529e598 -->
 <!-- doc-lint:rule-definition -->
 # プロセスとコマンドの規範
 
@@ -121,8 +121,8 @@ pid を控えていなければ、`scripts/proc.py find 実行ファイル名 [-
 
 したがって回収の書き方は二つしかない。`wait "$pid"` で一つずつ終了コードを取るか、
 各項目が終了コードを自分のファイルに落とし、回収時に決まった順で一つずつ読むかである。
-singlefs の `.claude/gate.d/55-qemu-first-transaction.sh` は後者であり、仮想機三台が同時に走り、
-それぞれが終了コードを `$work/<モード>/vm-exit` に書き、回収はモード表の順に一つずつ判定する。
+後者の書き方：並行する各項目が自分の終了コードファイルを書き、
+回収は仕事を配ったときのあの表の順に一つずつ判定する。
 
 `scripts/shell-lint.sh` の S6 がこれを判定する。コマンド位置にある引数のない `wait` は赤になる。
 終了コードを本当に別の場所で回収しているなら、その行に `# shell-lint:exit-collected <どう回収しているか>` と書く。

@@ -1,4 +1,4 @@
-<!-- generated-from: rules/show-me-test.md sha256:e785f5234c9b9068e5f88280608eb7d579ebbfc57503608f7aa0349cba74c530 -->
+<!-- generated-from: rules/show-me-test.md sha256:5bef03e601fc7c431b2396d347c2bc28bf08becdcbe222341a1e97445a856f78 -->
 <!-- doc-lint:rule-definition -->
 # 受入の鉄則：Show me test
 
@@ -161,7 +161,7 @@
 
 **プロジェクト固有の段階も共有段階と同じ規則に従う。** それらも同じように提出者を
 拒否するのだから、`gate-lint` と `shell-lint` の対象になる——`gate.sh` が
-`.claude/gate.d/` を両方の lint に渡す（singlefs のローカル段階を初めて走査したときは、出口の無い拒否が 7 件出た）。
+`.claude/gate.d/` を両方の lint に渡す。
 
 ⚠️ **届く範囲は `.claude/gate.d/` までである。** プロジェクトのほかの場所のスクリプト（研究用スクリプト、hook）も同じように人を拒否するが、この二つの lint の範囲には入らない。
 ⇒ プロジェクトにこの種のディレクトリがあれば、`.claude/gate.d/` にローカル段階を一つつなぎ、それらをこの二つの lint に渡す。呼ぶときは `GATE_LINT_DIR` と `SHELL_LINT_DIR` をそれぞれ対象ディレクトリに向ける——

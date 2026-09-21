@@ -1,8 +1,8 @@
 ---
 name: decide
-description: singlefs の設計判断を記録・変更する。判断を決めるとき、既存の判断を覆すとき、ある選択が他の判断へ連鎖すると気づいたときに使う——記録の書式、状態遷移、不変条件リストと checker との同期要件を含む。
+description: 本プロジェクトの設計判断を記録・変更する。判断を決めるとき、既存の判断を覆すとき、ある選択が他の判断へ連鎖すると気づいたときに使う——記録の書式、状態遷移、不変条件リストと checker との同期要件を含む。
 ---
-<!-- generated-from: skills/decide/SKILL.md sha256:b70ce9157f6410306911babf4550559116a206acc5d1fb540484c1475293623c -->
+<!-- generated-from: skills/decide/SKILL.md sha256:3e0052a40d68bea7ba65f465894a0f7322f601ba2ff1d410c36a538ff4c39e29 -->
 
 # 設計判断を一件記録する
 

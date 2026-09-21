@@ -1,4 +1,4 @@
-<!-- generated-from: rules/code-discipline.md sha256:18ead1973ba26425f0ed486a35ecedcb2137cb89b02f91f77dbe1f8bdcac7776 -->
+<!-- generated-from: rules/code-discipline.md sha256:743aa4d67cd2227966260be93ff456ef561a3379086d71fb85dd0ba9d72a3f9a -->
 <!-- doc-lint:rule-definition -->
 # コーディング規律：machine-first の実施細則
 
@@ -62,7 +62,7 @@ crc  # cyclic redundancy check：巡回冗長検査
 登録表がその略語の唯一の権威ある定義であり、他の箇所はそれに従い、二つ目の定義を書かない。
 **一文字は登録できない**：一文字には唯一の意味がない。
 
-**プロジェクト自身の番号**（kb に登録された実験 E57、判断 D22 の類）を名前の一区切りとして使うときは、「文字と数字」という一つの類として登録する：
+**プロジェクト自身の番号**（kb に登録された実験番号や決定番号の類）を名前の一区切りとして使うときは、「文字と数字」という一つの類として登録する：
 
 ```text
 e<数字>  # 実験番号。.claude/kb/experiments.md に登録

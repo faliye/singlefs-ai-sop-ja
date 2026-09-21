@@ -1,8 +1,8 @@
 ---
 name: gate
-description: singlefs の受入ゲートを走らせる。コードを提出する前、ある変更を受け取れるか判断するときに使う——各段階の意味、結果の判読、どの「失敗」がコードではなく環境の問題かを含む。
+description: 本プロジェクトの受入ゲートを走らせる。コードを提出する前、ある変更を受け取れるか判断するときに使う——各段階の意味、結果の判読、どの「失敗」がコードではなく環境の問題かを含む。
 ---
-<!-- generated-from: skills/gate/SKILL.md sha256:e71deec8f716d300a5c2209711931977bb2540d363c7d9f439d035307ba07e0e -->
+<!-- generated-from: skills/gate/SKILL.md sha256:7394a65a0a358685ec20dd3d22b475ae27603354e01c2da9d3452ab9c6f4c5fa -->
 
 # 受入ゲート
 

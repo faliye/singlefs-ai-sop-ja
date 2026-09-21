@@ -1,8 +1,8 @@
 ---
 name: crash-test
-description: singlefs の検証スイートを走らせる——クラッシュ点リプレイ、モデル対照テスト。書き込み経路が正しいかを判断するときに使う。
+description: 本プロジェクトの検証スイートを走らせる——クラッシュ点リプレイ、モデル対照テスト。書き込み経路が正しいかを判断するときに使う。
 ---
-<!-- generated-from: skills/crash-test/SKILL.md sha256:dbd0f340438a398c80193ae3f618a6f81eaa1b50cb43baf65fc605f1b3fe6209 -->
+<!-- generated-from: skills/crash-test/SKILL.md sha256:6726d4f016f710594519a9ccfa5d4b9a463267786faf7e934ba37713d304336e -->
 
 # 検証スイート
 
