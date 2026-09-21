@@ -1,7 +1,7 @@
-<!-- generated-from: templates/CLAUDE.project.md sha256:e76f71b9d747bd7b1eed2f643de50fd189ba213831122b1bdfc2881af534b4f4 -->
+<!-- generated-from: templates/CLAUDE.project.md sha256:a13665de77df53b52b0bb603f16ab069a1c9395f79f023b394c33d81dc63b6a3 -->
 # <プロジェクト名>
 
-<三〜五行：このプロジェクトが何か、今どのマイルストーンか、singlefs 本線とどういう関係か。
+<三〜五行：このプロジェクトが何か、今どのマイルストーンか、本線とどういう関係か。
 それより長くしない。>
 
 ## 規則（常時有効）
