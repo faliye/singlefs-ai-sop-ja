@@ -1,4 +1,4 @@
-<!-- generated-from: rules/engineering-philosophy.md sha256:c17c178d233e0f798a5050b7e2661dac359708786edd7f55906a6924da1514c1 -->
+<!-- generated-from: rules/engineering-philosophy.md sha256:8007f513f3688a9d75bed1c16cfe443aa40a7fa1ca44a4b82fc27b6c7486591d -->
 <!-- doc-lint:rule-definition -->
 # エンジニアリング理念
 
@@ -49,7 +49,7 @@
 **人間の注意はこの体系で最も高価な資源であり、コードを読むことに使うべきではない**——
 それはモデルに任せられる。
 
-使うべきなのは、機械には判断できない次の四つである：
+使うべきなのは、機械には判断できない四つのことである：
 
 1. **このテストは正しい対象をテストしているか**
 2. **この不変条件そのものは正しいか**

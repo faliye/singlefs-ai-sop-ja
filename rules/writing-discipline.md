@@ -1,4 +1,4 @@
-<!-- generated-from: rules/writing-discipline.md sha256:805c4dce4880e2b75b4fe5cf27182dfdc4f792c88740d442f852375d0c695904 -->
+<!-- generated-from: rules/writing-discipline.md sha256:0d0d6cd3fa557621c41d4bb39014acfbe35d01de7357e7a078e7768772339d18 -->
 <!-- doc-lint:rule-definition -->
 # 文章の規律
 

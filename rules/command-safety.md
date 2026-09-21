@@ -1,4 +1,4 @@
-<!-- generated-from: rules/command-safety.md sha256:19f0678ac7f2ff0c62596e4321ebd8649581548d1f63b35fd77d56f460938a1d -->
+<!-- generated-from: rules/command-safety.md sha256:9b027b70a29465e89c54624a2bb4991c6d830b74fa67341c1ebc3e0ce53c2d08 -->
 <!-- doc-lint:rule-definition -->
 # プロセスとコマンドの規範
 
@@ -141,7 +141,7 @@ singlefs の `.claude/gate.d/55-qemu-first-transaction.sh` は後者であり、
 （「結果の回収には完全性のゲートを設ける」の項が同じことを扱っている）。
 
 **並行にしたあとは、赤くなれることを証明し直す。** 並行にすること自体が、
-それまで赤くなっていた検査を緑にしてしまう——上の表の最初の二行がまさにそれである。
+それまで赤くなっていた検査を緑にしてしまう——引数なしの `wait` と、バックグラウンド本体に書く `|| bad=1` がまさにそれである。
 `show-me-test.md` の通りにする。必ず赤くなる入力を与え、並行版でもなお赤くなるかを見る。
 証明し直していない並行化は、その検査を切ったのと同じである。
 

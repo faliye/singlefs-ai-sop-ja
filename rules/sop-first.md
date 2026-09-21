@@ -1,4 +1,4 @@
-<!-- generated-from: rules/sop-first.md sha256:9a597f82725a7c8f253445168dfb6a2df8f2c7d5c3baff57ed99b0b7831bc8f1 -->
+<!-- generated-from: rules/sop-first.md sha256:05059d36c9bc6db892ee1f51250147daf49692422e72818e266ce619c4f27ac1 -->
 <!-- doc-lint:rule-definition -->
 # SOP はコードに優先する
 
@@ -34,7 +34,7 @@
 **どちらの結果も、通してしまうより悪い。**
 
 したがって：**拒否する時は次に何をするかを述べる。**
-`scripts/gate-lint.sh` が強制し、下の表にある拒否の形態はどれも見る：
+`scripts/gate-lint.sh` が強制し、拒否の形態はどれも見る：
 
 | 形態 | 対処をどこに書くか | 判定 |
 |---|---|---|

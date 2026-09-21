@@ -1,4 +1,4 @@
-<!-- generated-from: CLAUDE.md sha256:d8e17abafec00f8034b0f5964d8a7690485966d2e05b2f4b1b9c05c4f9d3a017 -->
+<!-- generated-from: CLAUDE.md sha256:21238fa8d9aef84611bebd3b24949323545c207fb3307ccf56dbe30990b76c78 -->
 <!-- doc-lint:rule-definition -->
 # singlefs-ai-sop-ja
 
@@ -89,6 +89,7 @@ master を押したその一回で他の二つの言語リポジトリが**実�
 | rules | プロジェクトの `CLAUDE.md` から `@.claude/singlefs-ai-sop/rules/x.md` で参照し、複製を置かない |
 | プロジェクト固有規則 | `.claude/rules/x.md` に置き、`@.claude/rules/x.md` で参照する。上流には上げない |
 | skills | プロジェクトの `.claude/skills/<名>/SKILL.md` は**スタブ**：frontmatter ＋ 共有本文への案内 |
+| agents | プロジェクトの `.claude/agents/<名>.md` は**スタブ**：frontmatter ＋ 共有本文への案内。約束事は `agents/INDEX.md` |
 | scripts | プロジェクトの `.claude/scripts/x.sh` は**ラッパー**：環境を整えて共有スクリプトを `exec` する |
 
 スタブとラッパーに本文やロジックを書かない——本文が在るべき場所は一箇所だけであり、
