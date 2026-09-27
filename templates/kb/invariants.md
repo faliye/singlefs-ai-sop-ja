@@ -1,7 +1,7 @@
-<!-- generated-from: templates/kb/invariants.md sha256:09660ba6411d31a65954eaab1da5625b297a62e404096e6b47db3f23b04f198f -->
+<!-- generated-from: templates/kb/invariants.md sha256:eacbed73704d47859829fefd0fba9f09e8839e607e6fa7e6ce761ca696af9e0a -->
 # 不変条件リスト
 
-**checker は `invariants.md` の実行可能な形である。** ここに一条足すたび、checker にも
+**プロジェクトの検査は `invariants.md` の実行可能な形である。** ここに一条足すたび、
 検査を一つ足す。二者が食い違うコミットは受け取らない。
 
 各不変条件は**判定可能**な形で書くこと——一つのイメージに対して「成立/不成立」を
@@ -15,7 +15,7 @@
 
 <!-- doc-lint:registry name-col=2 -->
 
-| ID | 簡称 | 不変条件 | checker の状態 |
+| ID | 簡称 | 不変条件 | 検査の状態 |
 |---|---|---|---|
 | I-1.1 | <この一条の短い名前> | <判定可能な言明> | 未実装 |
 

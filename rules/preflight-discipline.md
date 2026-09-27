@@ -1,4 +1,4 @@
-<!-- generated-from: rules/preflight-discipline.md sha256:ef097787d167f9e1f37000875d47a2a6c789df8d8e42cdceebbb1fa0129d9963 -->
+<!-- generated-from: rules/preflight-discipline.md sha256:9afbd8348c3a6efc22e73692c778c7e016bbd858eb59949bce5b2942715290ba -->
 <!-- doc-lint:rule-definition -->
 # 受付条件と実行条件：走らせてよいかを先に判定し、それから走らせる
 
@@ -39,7 +39,7 @@
 `always`、`none` の理由と `check` の対処は 8 文字以上。
 `none` は本当に環境への要求がないスクリプトにだけ書く。ツール・デバイス・権限が要るものは `command` か `check` で書き、スクリプトの中で自分で判定するのに任せない。
 `check` のコマンドはリポジトリのルート（git リポジトリの外ならスクリプトのディレクトリ）で `bash -c` として走り、環境には `PREFLIGHT_SCRIPT` と `PREFLIGHT_SCRIPT_DIRECTORY` があり、呼び出し側の標準入力は読めない。
-git リポジトリの外では入力が変わったかを判定できないので、そのまま走らせ、指紋も記録しない。
+git リポジトリの外では入力が変わったかを判定しない：そのまま走らせ、指紋も記録しない。
 宣言の解析と判定は `scripts/preflight.py` の一か所にだけあり、書き方はその振る舞いが正とする。
 
 ## 冒頭でまず判定する
@@ -51,7 +51,7 @@ git リポジトリの外では入力が変わったかを判定できないの�
 | Rust とその他の言語 | `main` の最初の文で `preflight` という名前の関数を呼ぶ：それは `python3 <規範のコピー>/scripts/preflight.py check <ソースファイルの絶対パス> [--force] -- <引数…>` を（`sh -c` を経ずに）直接起こし、終了コードが 0 でなければそのコードで終了する。stdout のその行が `met` で始まれば最後の欄の指紋を覚えておき、`forced` で始まれば最後の欄の要約を `PREFLIGHT_FORCED` として扱う |
 
 `inputs-changed` を書いたスクリプトは、成功して終了する前に `preflight_record_success` を呼ぶ（Rust は `preflight.py record <ソースファイル> --fingerprint <開始時の指紋> -- <引数…>` を実行する）。
-記録するのは開始時に判定した指紋である。終わった時点で入力が変わっていた（走っている間に誰かが変えた）回、強制実行の回、失敗した回、一部を今回走らせなかった回（`lib.sh` の `report_not_run` で報じた回）は記録しない。
+記録するのは開始時に判定した指紋である。終わった時点で入力が変わっていた回、強制実行の回、失敗した回、一部を今回走らせなかった回（`lib.sh` の `report_not_run` で報じた回）は記録しない。
 
 ## 条件を満たさないとき
 

@@ -1,10 +1,10 @@
-<!-- generated-from: templates/kb/checks-owed.md sha256:4a03be119c2d1d9d54c79672ce2f7d63321de8230121c760a1de35ac9ca16fb8 -->
+<!-- generated-from: templates/kb/checks-owed.md sha256:74c80b383b7c5b7e570e54f7935e18e0adf9d744be214a0abe2774974c2da6be -->
 # 借りている検査の一覧
 
 **`checks-owed.md` には「何を止めたいか既に分かっているが、今はまだ止められない」検査を置く。**
 
 `invariants.md` との境界：不変条件は**一つのイメージに対して**判定可能な性質であり、
-checker がその実行可能な形。`checks-owed.md` に置くのは**コード経路への要求**であり、
+プロジェクトの検査がその実行可能な形。`checks-owed.md` に置くのは**コード経路への要求**であり、
 イメージからは判定できず、実行時にゲートが止めるしかないものである。
 
 **書き込む敷居**：「何を止めるか」「どう止めれば赤くなるか」「今は何が足りないか」を言えること。

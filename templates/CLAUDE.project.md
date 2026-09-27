@@ -1,4 +1,4 @@
-<!-- generated-from: templates/CLAUDE.project.md sha256:01eb1219ec61e91e52bff7e6336ed33972387ab0ea31266b24265c0ba5d6b041 -->
+<!-- generated-from: templates/CLAUDE.project.md sha256:9b29fc936e6e41a9191379b1d3cb81731f12e0a24d7dc225fc5aa847230fafde -->
 # <プロジェクト名>
 
 <三〜五行：このプロジェクトが何か、今どのマイルストーンか、本線とどういう関係か。
@@ -23,7 +23,7 @@
 @.claude/singlefs-ai-sop/rules/preflight-discipline.md
 @.claude/singlefs-ai-sop/rules/session-wrapup.md
 
-**ファイルシステム設計に固有の規則**（トランザクション、クラッシュ一貫性、ディスク書式の類）は
+**被検対象に固有の規則**（それ自身の設計規律、検証手段の類）は
 `.claude/rules/` に置き、ここで併せて `@` 参照する。共有 SOP へ上げない——
 あちらには協働の規範だけを置く。
 
@@ -38,7 +38,7 @@
 |---|---|
 | `.claude/kb/decisions.md` | 設計判断：何が決まり、なぜ決まり、何がまだ決まっていないか |
 | `.claude/kb/experiments.md` | 実験記録：問い、先に決め打った判定基準、対照と変異、再実行コマンド |
-| `.claude/kb/invariants.md` | 不変条件リスト。checker がその実行可能な形 |
+| `.claude/kb/invariants.md` | 不変条件リスト。プロジェクトの検査がその実行可能な形 |
 | `.claude/kb/prior-art.md` | 他実装の調査。出典と計測条件つき |
 | `.claude/kb/pitfalls.md` | 落とし穴一覧。設計判断のたびに照合しに戻る |
 | `.claude/kb/checks-owed.md` | 借りている検査：止めたいと分かっているがまだ止められないもの。前提つき |

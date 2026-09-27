@@ -1,4 +1,4 @@
-<!-- generated-from: CLAUDE.md sha256:350acd12b48315b929868d2f0ebbb3d32663e5cbf22457d30fc454b851c4778d -->
+<!-- generated-from: CLAUDE.md sha256:47b40bbd6e6f076537132995fba50313796987d088507d749c337d1acd6d8170 -->
 <!-- doc-lint:rule-definition -->
 # singlefs-ai-sop-ja
 
@@ -38,6 +38,8 @@
 どちらにも入らないものは網羅性の検査が止める。
 
 ## 規則（常時有効）
+
+**説明と論証は `rules/` では余計である。** 規則に書くのは判定基準、手順、射程と例外、既定のやり方、参照先だけ（`rules/rules-discipline.md` 第 1・2 条）。
 
 @rules/engineering-philosophy.md
 @rules/sop-first.md
