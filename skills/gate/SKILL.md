@@ -2,7 +2,7 @@
 name: gate
 description: 本プロジェクトの受入ゲートを走らせる。コードを提出する前、ある変更を受け取れるか判断するときに使う——各段階の意味、結果の判読、どの「失敗」がコードではなく環境の問題かを含む。
 ---
-<!-- generated-from: skills/gate/SKILL.md sha256:c5c2edf8bce8a5f407ac9cd7eb42c076585cda2f19330e6104189dc2260b271c -->
+<!-- generated-from: skills/gate/SKILL.md sha256:0ab33569c38c91e6dc3b9e6a850b2286d22e71b8387358ac6ab7405fc0592864 -->
 
 # 受入ゲート
 
@@ -72,10 +72,9 @@ bash .claude/scripts/gate.sh --staged # HEAD + ステージ領域だけで走ら
 `gate.sh` や `doc-lint.sh` を変えたら、**止められるべき入力を作って本当に赤くなるか確かめる**：
 
 ```bash
-# 拒否されるべき標本を作り、doc-lint に食わせて赤くなることを確かめる
+# 拒否されるべき標本を作り、doc-lint に食わせて赤くなることを確かめる：kb 文書に締めくくりの履歴節が無い（構造の検査なので、どの言語のリポジトリでも判定する）
 d=$(mktemp -d); mkdir -p "$d/kb"
-printf '# 決定\n\nノードサイズは 16K（以前は 4K）。\n\n## 改訂履歴\n\n### %s\n- 作成。\n' "$(date +%F)" \
-  > "$d/kb/decisions.md"
+printf '# 決定\n\nノードサイズは 16K。\n' > "$d/kb/decisions.md"
 bash .claude/singlefs-ai-sop/scripts/doc-lint.sh "$d"; echo "終了コード $? —— 1 のはず"
 rm -rf "$d"
 ```
@@ -83,7 +82,7 @@ rm -rf "$d"
 ⚠️ **標本は別のディレクトリに作ること。本物の kb ファイルの末尾に `>>` してはいけない。**
 追記した内容は「改訂履歴」見出しより後ろに落ち、本文走査はそこで既に止まっている——
 終了コードは 0 になり、「検査が何もしていない」ように見えるが、実際は標本を作る場所が
-間違っているだけである（監査でこの skill 自身の例に対して実測された）。
+間違っているだけである。
 
 検査を変えたら `bash .claude/singlefs-ai-sop/scripts/selftest.sh` も走らせる。
 `scripts/fixtures/` の標本を使って、各検査がまだ赤くなれることを証明する。

@@ -79,13 +79,13 @@
 
 ## 接続方法
 
-プロジェクトはこのリポジトリの内容を複製しない。三層それぞれに接続方法がある
+プロジェクトはこのリポジトリの内容を複製しない。各層それぞれに接続方法がある
 （**シンボリックリンクは使わない**）：
 
 | 層 | 接続方法 |
 |---|---|
 | rules | プロジェクトの `CLAUDE.md` から `@.claude/singlefs-ai-sop/rules/x.md` で参照し、複製を置かない |
-| プロジェクト固有規則 | `.claude/rules/x.md` に置き、`@.claude/rules/x.md` で参照する。上流には上げない |
+| プロジェクト固有規則 | `.claude/rules/x.md` に置き、プロジェクトの `CLAUDE.md` から `@.claude/rules/x.md` で参照する。上流には上げない |
 | skills | プロジェクトの `.claude/skills/<名>/SKILL.md` は**スタブ**：frontmatter ＋ 共有本文への案内 |
 | agents | プロジェクトの `.claude/agents/<名>.md` は**スタブ**：frontmatter ＋ 共有本文への案内。約束事は `agents/INDEX.md` |
 | scripts | プロジェクトの `.claude/scripts/x.sh` は**ラッパー**：環境を整えて共有スクリプトを `exec` する |

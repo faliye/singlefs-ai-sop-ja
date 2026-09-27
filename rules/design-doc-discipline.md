@@ -1,4 +1,4 @@
-<!-- generated-from: rules/design-doc-discipline.md sha256:f277f9947819d76e8d8d2fcef88674583ace9ab71a18942cfe8e65e033afdee6 -->
+<!-- generated-from: rules/design-doc-discipline.md sha256:aff80a1ea4c453f314892511806881c27bb5cef3baa955ee47faf89fa7c4b83a -->
 <!-- doc-lint:rule-definition -->
 # 設計文書の鉄則
 
@@ -19,11 +19,6 @@
 ### YYYY-MM-DD
 - かつて X / 現在 Y / 変更の根拠：Z
 ```
-
-**なぜか**：本文に履歴が混ざると、読む側はどれが現行値か一目で判別できない。
-数回重なると「今はどうなっているのか」という最も基本的な問いすら
-考古学的な作業を要するようになり、しかもその結論はしばしば誤っている。
-本プロジェクトは数年続く。この費用は指数的に増える。
 
 **帰結**：
 - 決定を変えたら**本文を直接書き換える。** 横に「（元は X）」と註記しない。
