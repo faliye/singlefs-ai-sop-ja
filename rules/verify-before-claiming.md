@@ -1,4 +1,4 @@
-<!-- generated-from: rules/verify-before-claiming.md sha256:c3bea54508176dd8f012fd1728b5628fa53d1afd2f953263d88dc9cbc87fe173 -->
+<!-- generated-from: rules/verify-before-claiming.md sha256:2a1eaf9f7e7be7dcf914d6b238533af4344fbb9ed9c3a62fcad7953b292387f9 -->
 <!-- doc-lint:rule-definition -->
 # 外部の状態を述べる前に、その場で確認する
 
@@ -10,7 +10,7 @@
 
 | 述べようとしていること | 今すぐ走らせるコマンド |
 |---|---|
-| ゲートが今通るかどうか | `scripts/gate.sh` を走らせる。前回の結果から推測しない |
+| ゲートが今通るかどうか | 直近の `gate.sh --staged` の要約を引く（日付とそのツリーのハッシュ付き）。その後に変更があれば「通る」とは言わず、「前回は緑、その後のこれらの変更は未実行」と言う。ゲートはコミット時にだけ走らせ、この一言のために走らせ直さない |
 | ある不変条件が実装済みかどうか | `kb/invariants.md` の状態列を読み、さらにそれを実装する検査のソースを grep して実在を確認する |
 | ある決定が確定しているかどうか | `kb/decisions.md` を読み、確定 / 半確定 / 未確定のどれかを見る |
 | ツールチェーンと環境が揃っているか | `scripts/env.sh` を走らせる |

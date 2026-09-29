@@ -1,4 +1,4 @@
-<!-- generated-from: templates/CLAUDE.project.md sha256:9b29fc936e6e41a9191379b1d3cb81731f12e0a24d7dc225fc5aa847230fafde -->
+<!-- generated-from: templates/CLAUDE.project.md sha256:f0b528aa29254c6b4815f6431d9ea38f54ffcebe95cf5deb0626bc5914604bf6 -->
 # <プロジェクト名>
 
 <三〜五行：このプロジェクトが何か、今どのマイルストーンか、本線とどういう関係か。
@@ -6,22 +6,21 @@
 
 ## 規則（常時有効）
 
-@.claude/singlefs-ai-sop/rules/engineering-philosophy.md
 @.claude/singlefs-ai-sop/rules/sop-first.md
 @.claude/singlefs-ai-sop/rules/show-me-test.md
-@.claude/singlefs-ai-sop/rules/machine-first.md
 @.claude/singlefs-ai-sop/rules/code-discipline.md
 @.claude/singlefs-ai-sop/rules/writing-discipline.md
-@.claude/singlefs-ai-sop/rules/design-doc-discipline.md
 @.claude/singlefs-ai-sop/rules/kb-discipline.md
 @.claude/singlefs-ai-sop/rules/rules-discipline.md
 @.claude/singlefs-ai-sop/rules/test-discipline.md
 @.claude/singlefs-ai-sop/rules/evidence-discipline.md
 @.claude/singlefs-ai-sop/rules/verify-before-claiming.md
-@.claude/singlefs-ai-sop/rules/pushback-discipline.md
 @.claude/singlefs-ai-sop/rules/command-safety.md
 @.claude/singlefs-ai-sop/rules/preflight-discipline.md
 @.claude/singlefs-ai-sop/rules/session-wrapup.md
+
+理念系の四篇は `@` で常駐させない。セッション開始時に一度全文を読み、その後は名前で引き直す：`.claude/singlefs-ai-sop/rules/engineering-philosophy.md`、`.claude/singlefs-ai-sop/rules/machine-first.md`、`.claude/singlefs-ai-sop/rules/design-doc-discipline.md`、`.claude/singlefs-ai-sop/rules/pushback-discipline.md`。
+<!-- doc-lint:read-once engineering-philosophy.md machine-first.md design-doc-discipline.md pushback-discipline.md -->
 
 **被検対象に固有の規則**（それ自身の設計規律、検証手段の類）は
 `.claude/rules/` に置き、ここで併せて `@` 参照する。共有 SOP へ上げない——

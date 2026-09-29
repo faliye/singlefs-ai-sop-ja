@@ -1,4 +1,4 @@
-<!-- generated-from: rules/writing-discipline.md sha256:3d77034abe0130dfbca37037e11a7ed1b92635b8329ae403df04cea4ffe3cd4a -->
+<!-- generated-from: rules/writing-discipline.md sha256:7dc3c6c818ef7df14ec265b4b6a35f22c8b73c972d00fc0650236ae229c3373d -->
 <!-- doc-lint:rule-definition -->
 # 文章の規律
 
@@ -81,7 +81,7 @@
 7. **引用したソースコード。** ログやダンプも同様で、結論を述べる。
    例外は、載せなければ読者が自分で検証できない決定的な根拠である。
 
-## 普通の言葉で書く
+## 文体は簡潔で自然に
 
 **現代の普通の日本語で、まっすぐ書く。回りくどくしない。**
 

@@ -1,4 +1,4 @@
-<!-- generated-from: CLAUDE.md sha256:47b40bbd6e6f076537132995fba50313796987d088507d749c337d1acd6d8170 -->
+<!-- generated-from: CLAUDE.md sha256:d3ce3af84b2dd2cb3a71d48721208b337d63316853cd79834446ddc08570b88a -->
 <!-- doc-lint:rule-definition -->
 # singlefs-ai-sop-ja
 
@@ -9,6 +9,7 @@
 
 規範本体を変更したら**必ず同時に `VERSION` を上げる**。
 上げなければプロジェクト側のゲートがバージョン不一致を報告する。
+リリースは週ごとにまとめる：規則とスクリプトの変更はまず作業ツリーに溜め、週に一版にまとめる。誤検出・誤判定の修正もその版に溜めて一緒に出す。利用者プロジェクトはリリースごとに一度副本を同期する。
 **どのパスが「規範本体」かは `scripts/version-discipline.sh` の `GOVERNED` を正とする**
 ——一覧はそこ一箇所だけで、ここには写さない。
 上げたら `CHANGELOG.md` の先頭にその版の節を書く——一版一節、番号は飛ばさない。

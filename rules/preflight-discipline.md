@@ -1,12 +1,12 @@
-<!-- generated-from: rules/preflight-discipline.md sha256:9afbd8348c3a6efc22e73692c778c7e016bbd858eb59949bce5b2942715290ba -->
+<!-- generated-from: rules/preflight-discipline.md sha256:9ba88c3dbbe5e843514acfdb6738d858d102a541e9ea30cc7253db85253fe282 -->
 <!-- doc-lint:rule-definition -->
 # 受付条件と実行条件：走らせてよいかを先に判定し、それから走らせる
 
 **すべてのスクリプトは冒頭に、いつ呼ぶべきか・いつ呼んではならないかを書き、仕事を始める前にそれを判定する：条件を満たさなければ実行を拒否し、`--force` を付けたときだけそのまま走らせる。**
 
-対象はすべてのスクリプト：本パッケージの `install.sh` と `scripts/`（`scripts/claude-hooks/`、`scripts/githooks/` を含む）、
-プロジェクトの `.claude/gate.d/`、`.claude/scripts/`、`.claude/hooks/`、そしてプロジェクトが `.claude/preflight-dirs` に登録したディレクトリ——
-実験スクリプトや実験バイナリのソースファイルがある場所を登録する。各ディレクトリはその階層だけを数え、サブディレクトリは別の行で登録する。
+対象は次の場所：本パッケージの `install.sh` と `scripts/`（`scripts/claude-hooks/`、`scripts/githooks/` を含む）、
+プロジェクトの `.claude/gate.d/`、そしてプロジェクトが `.claude/preflight-dirs` に登録したディレクトリ——登録するのは、入力によって再実行の要否を判定する重い場所である：
+実験スクリプトや実験バイナリのソースファイルがある場所を登録する。プロジェクトの `.claude/scripts/`、`.claude/hooks/` その他の軽いスクリプトは受付条件と実行条件を書かない。各ディレクトリはその階層だけを数え、サブディレクトリは別の行で登録する。
 `.claude/preflight-dirs` は一行に一つ `<ディレクトリ>  # 何が置いてあるか`。実験のないプロジェクトもこのファイルを作り、そのことを一行のコメントで書く。
 
 判定しないのは三種類：source または import されるライブラリ、サンプル、共有スクリプトを `exec` するだけのラッパー（install.sh が敷く数行。ほかのロジックが混じっていれば普通のスクリプトとして判定する）。
