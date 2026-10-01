@@ -1,4 +1,4 @@
-<!-- generated-from: rules/preflight-discipline.md sha256:9ba88c3dbbe5e843514acfdb6738d858d102a541e9ea30cc7253db85253fe282 -->
+<!-- generated-from: rules/preflight-discipline.md sha256:34b5c81a1806d2f73fba315b12e0dba8bbbf7a6793f5ac782243e42440e1f2db -->
 <!-- doc-lint:rule-definition -->
 # 受付条件と実行条件：走らせてよいかを先に判定し、それから走らせる
 
@@ -48,7 +48,7 @@ git リポジトリの外では入力が変わったかを判定しない：そ�
 |---|---|
 | shell | `source lib.sh`（lib.sh を source しないフックは `preflight.sh` を source する）の後、最初に仕事をする行の前に、この一行をそのまま写す：`preflight "${BASH_SOURCE[0]}" "$@"; set -- ${PREFLIGHT_ARGUMENTS[@]+"${PREFLIGHT_ARGUMENTS[@]}"}`。その前に置けるのは `set <オプション>`、`shopt`、`source`、代入だけで引数を読まない行、`unset` だけ |
 | python | 先に `sys.dont_write_bytecode = True` とし、それから本パッケージの `scripts/preflight.py` を import する。`if __name__ == '__main__':` の最初の文で `preflight(__file__)` を呼ぶ。このブロックがなければ、モジュールで最初に仕事をする文の前に置く。その前のトップレベルの文では、引数や標準入力を読んだり、サブプロセスを起こしたり、ファイルを開いたりしない |
-| Rust とその他の言語 | `main` の最初の文で `preflight` という名前の関数を呼ぶ：それは `python3 <規範のコピー>/scripts/preflight.py check <ソースファイルの絶対パス> [--force] -- <引数…>` を（`sh -c` を経ずに）直接起こし、終了コードが 0 でなければそのコードで終了する。stdout のその行が `met` で始まれば最後の欄の指紋を覚えておき、`forced` で始まれば最後の欄の要約を `PREFLIGHT_FORCED` として扱う |
+| Rust とその他の言語 | `main` の最初の文で `preflight` という名前の関数を呼ぶ：それは `python3 <規範のコピー>/scripts/preflight.py check <ソースファイルの絶対パス> [--force] -- <引数…>` を（`sh -c` を経ずに）直接起こし、終了コードが 78 なら 78 で、それ以外の 0 でない値なら 1 で終了する。stdout のその行が `met` で始まれば最後の欄の指紋を覚えておき、`forced` で始まれば最後の欄の要約を `PREFLIGHT_FORCED` として扱う |
 
 `inputs-changed` を書いたスクリプトは、成功して終了する前に `preflight_record_success` を呼ぶ（Rust は `preflight.py record <ソースファイル> --fingerprint <開始時の指紋> -- <引数…>` を実行する）。
 記録するのは開始時に判定した指紋である。終わった時点で入力が変わっていた回、強制実行の回、失敗した回、一部を今回走らせなかった回（`lib.sh` の `report_not_run` で報じた回）は記録しない。

@@ -1,9 +1,9 @@
-<!-- generated-from: templates/kb/decisions.md sha256:c4c4e686926487e6c1623c3757b890ea955bccf89f21df97fdffcbcbdd23b3b7 -->
+<!-- generated-from: templates/kb/decisions.md sha256:4c39fa5207446b386f96ad8a5e86f81aab51a707abfb6f565d1bae5a9bae7fe7 -->
 # 設計判断の記録
 
 各判断の状態は三つだけ：**確定** / **半確定**（方向は決まり細部は未定）/ **未定**。
-書式と硬い要件は `decide` skill にある。判断を覆すときは本文を直接書き換え、
-根拠を文末の「改訂履歴」に書く。
+書式と硬い要件は `decide` skill にある。判断を覆すときは本文を直接書き換える。このファイルをプロジェクト直下の `.claude/history-carriers` に登録している（この登録表がなければすべて該当する）なら
+根拠を文末の「## 改訂履歴」に書き、登録していなければ経緯は git に任せる。
 
 ---
 

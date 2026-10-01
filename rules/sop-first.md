@@ -1,4 +1,4 @@
-<!-- generated-from: rules/sop-first.md sha256:7dfb58b36695bc078a27f4f82c565cb43d0f0f2ff04c99ef6733e7f55f26f32a -->
+<!-- generated-from: rules/sop-first.md sha256:d37746865ca2f761465ac43a69684129cd83ea5acbcdbcb619755aee1d355014 -->
 <!-- doc-lint:rule-definition -->
 # SOP はコードに優先する
 

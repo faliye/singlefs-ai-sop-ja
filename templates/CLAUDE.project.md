@@ -1,4 +1,4 @@
-<!-- generated-from: templates/CLAUDE.project.md sha256:f0b528aa29254c6b4815f6431d9ea38f54ffcebe95cf5deb0626bc5914604bf6 -->
+<!-- generated-from: templates/CLAUDE.project.md sha256:b6a339375b62754a6b736b0802348250e8468767e48ed62d53ebe227e7ea6371 -->
 # <プロジェクト名>
 
 <三〜五行：このプロジェクトが何か、今どのマイルストーンか、本線とどういう関係か。
@@ -13,6 +13,7 @@
 @.claude/singlefs-ai-sop/rules/kb-discipline.md
 @.claude/singlefs-ai-sop/rules/rules-discipline.md
 @.claude/singlefs-ai-sop/rules/test-discipline.md
+@.claude/singlefs-ai-sop/rules/test-script-discipline.md
 @.claude/singlefs-ai-sop/rules/evidence-discipline.md
 @.claude/singlefs-ai-sop/rules/verify-before-claiming.md
 @.claude/singlefs-ai-sop/rules/command-safety.md
@@ -40,7 +41,7 @@
 | `.claude/kb/invariants.md` | 不変条件リスト。プロジェクトの検査がその実行可能な形 |
 | `.claude/kb/prior-art.md` | 他実装の調査。出典と計測条件つき |
 | `.claude/kb/pitfalls.md` | 落とし穴一覧。設計判断のたびに照合しに戻る |
-| `.claude/kb/checks-owed.md` | 借りている検査：止めたいと分かっているがまだ止められないもの。前提つき |
+| `.claude/kb/checks-owed.md` | 負債表：止めたいと分かっているがまだ止められない検査。前提つき |
 | `records/` | 構築の経過 |
 
 ## ゲート
@@ -53,7 +54,7 @@ bash .claude/scripts/gate.sh          # 受入ゲート。提出前に必ず
 
 bash .claude/scripts/check.sh         # 速い折り返し（書式/lint/ビルド/単体テスト）
 bash .claude/scripts/gate-lint.sh     # ゲート自身：拒否のすべてが次の一手を示しているか
-bash .claude/scripts/shell-lint.sh    # shell 規律：pkill -f / pgrep -f、サブシェルからの値の持ち出し、git の取り消し系コマンド、守りのない rm -rf
+bash .claude/scripts/shell-lint.sh    # shell 規律：pkill -f / pgrep -f、サブシェルからの値の持ち出し、git の取り消し系コマンド、守りのない rm -rf、引数のない wait、pipefail 下で grep -q で終わるパイプ
 bash .claude/scripts/naming-lint.sh   # 命名規律：.rs の一文字名とよくある略語
 bash .claude/scripts/env.sh           # 環境自己検査
 ```

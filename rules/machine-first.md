@@ -1,4 +1,4 @@
-<!-- generated-from: rules/machine-first.md sha256:3ee7120030743799640ae1bbb582cddd480409c8baf00d84c74a2d799b717d21 -->
+<!-- generated-from: rules/machine-first.md sha256:9846842cb51310df94a4bace5dbf7e57c573f8022ff23498fe99f5ebefe9541c -->
 <!-- doc-lint:rule-definition -->
 # 機械優先：まず「読める」と「検証できる」を分ける
 
@@ -90,8 +90,8 @@
 
 ## 残すもの（誰がコードを読むかとは無関係）
 
-- クラッシュ一貫性、不変条件
-- ディスクフォーマット互換
+- 不変条件
+- 外部向けのフォーマットとプロトコルの互換
 - テストの再現性
 - 障害領域の隔離
 - 二分可能・巻き戻し可能

@@ -1,10 +1,10 @@
-<!-- generated-from: CLAUDE.md sha256:d3ce3af84b2dd2cb3a71d48721208b337d63316853cd79834446ddc08570b88a -->
+<!-- generated-from: CLAUDE.md sha256:6c89edb4d060fa2d876f46ef3059f175ad6944eefda05c2ebadf034b4a84551b -->
 <!-- doc-lint:rule-definition -->
 # singlefs-ai-sop-ja
 
 **貢献者ガバナンス規範とゲートツール（Contributor Governance）。**
 扱うのは**プロジェクトが AI とどう協働するか**であり、
-ファイルシステムをどう設計するかではない。利用者は一つだけで、名前は `I18N` の `consumers=` に登録してある。
+ファイルシステムをどう設計するかではない。利用者は一つだけである。
 このリポジトリ内で作業するときも、これらの規則の対象となる。
 
 規範本体を変更したら**必ず同時に `VERSION` を上げる**。
@@ -52,6 +52,7 @@
 @rules/kb-discipline.md
 @rules/rules-discipline.md
 @rules/test-discipline.md
+@rules/test-script-discipline.md
 @rules/evidence-discipline.md
 @rules/verify-before-claiming.md
 @rules/pushback-discipline.md
@@ -61,7 +62,7 @@
 
 ## 切り分けの判定基準
 
-**この SOP は `I18N` の `consumers=` に登録された唯一の利用者のために作られたものであり、
+**この SOP は唯一の利用者のために作られたものであり、
 他のプロジェクトで通用することを前提にしていない。**
 したがって判定基準は「他のプロジェクトもこれを必要とするか」ではない——
 見るべき他のプロジェクトが無い以上、誰でも「する」と答えられ、何もかもが上流に上がる。

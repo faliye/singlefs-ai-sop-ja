@@ -1,7 +1,7 @@
-<!-- generated-from: templates/kb/INDEX.md sha256:ef7f924c6f18ada89383ca5372d8b6611b20e761a299df73537b154059dbdf0a -->
+<!-- generated-from: templates/kb/INDEX.md sha256:4f75bf0679461b84148f74127f9ad0afa77aa9c6c2c43ffa0d7a3149b02c966a -->
 # kb 索引
 
-**規則は kb に入れない。[singlefs-ai-sop/rules/](../singlefs-ai-sop/CLAUDE.md) に入れる。**
+**規則は kb に入れない。[singlefs-ai-sop/rules/](../singlefs-ai-sop/rules/) に入れる。**
 kb には事実・判断・調査・実測値だけを置く。
 
 | ファイル | 内容 |
@@ -11,4 +11,4 @@ kb には事実・判断・調査・実測値だけを置く。
 | [invariants.md](invariants.md) | 不変条件リスト。プロジェクトの検査がその実行可能な形 |
 | [prior-art.md](prior-art.md) | 他実装の調査。出典と計測条件つき |
 | [pitfalls.md](pitfalls.md) | 落とし穴一覧。設計判断のたびに照合しに戻る |
-| [checks-owed.md](checks-owed.md) | 借りている検査：止めたいと分かっているがまだ止められないもの。前提つき |
+| [checks-owed.md](checks-owed.md) | 負債表：止めたいと分かっているがまだ止められない検査。前提つき |
