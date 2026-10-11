@@ -1,8 +1,11 @@
-<!-- generated-from: rules/kb-discipline.md sha256:fbc02aee6ce61e677bf2b4538c3912bba341d07369454023c4ef5ca500b68b47 -->
+<!-- generated-from: rules/kb-discipline.md sha256:5fc6374409399118bac70f7056c651282ed1e7e0cbd969d25d94a8f385a97d41 -->
 <!-- doc-lint:rule-definition -->
 # 知識文書の鉄則
 
-**適用対象**：`kb/*.md`——**モデルが検索するもの。**
+**適用対象**：`kb/*.md`——**モデルが検索するもの。** プロジェクトが kb のテキストを `.claude/kb/` の外（例えばある
+crate のそば）へ移すときは、プロジェクト直下の `.claude/kb-directories` に登録する（一行一条、プロジェクト直下からの
+相対パス、`#` の後に理由。複数行でもよい）。登録が無ければ今まで通り `.claude/kb/`。`doc-lint.sh`、
+`history-ordinal.sh`、`number-name-sync.sh` はどれも同じ登録を読む。
 
 kb は**一条ずつ取り出される**ことを前提に書き、通読を前提にしない。**目標は一つだけ：モデルに作り話をさせないこと。** 読みやすさは目標ではない。
 
