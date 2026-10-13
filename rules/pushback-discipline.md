@@ -1,4 +1,4 @@
-<!-- generated-from: rules/pushback-discipline.md sha256:d304568c3277890357eefd80eedd87cc3edc100b2d775770c10421b62df330a8 -->
+<!-- generated-from: rules/pushback-discipline.md sha256:a182572ce0e746601b74573d6435d4a9e1cd979e2308d1ed14386e54117f25b9 -->
 <!-- doc-lint:rule-definition -->
 # 提案は、誰が出したかによって検査を免れない
 
@@ -64,7 +64,7 @@
 **結末**：<相手が言い直したのでそのまま実施 / 案を変更 / 撤回>
 ```
 
-**他の場所からは必ずここへ張り、二部目は作らない**（`kb-discipline.md` 第 4 条）。`kb/decisions.md` の当該決定には
+**他の場所からは必ずここへ張り、二部目は作らない**（`kb-discipline.md` 第 4 条「矛盾は空白より悪い」）。`kb/decisions.md` の当該決定には
 「警告あり、`.claude/warnings/2026-09-06.md` を参照」の一行で足りる。本文は複製しない。
 
 書いた警告は直さず、その後の展開は後日のファイルに書く

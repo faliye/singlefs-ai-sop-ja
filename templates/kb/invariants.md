@@ -1,4 +1,4 @@
-<!-- generated-from: templates/kb/invariants.md sha256:46504eaa947a9f4d77daed9664c2b8d73c40ffbdda25e16d1ce645cc36378123 -->
+<!-- generated-from: templates/kb/invariants.md sha256:6ece5493d403cb1adabd445011af2256ee1118c77e3d71d112ce1ad5f31cbab9 -->
 # 不変条件リスト
 
 **プロジェクトの検査は `invariants.md` の実行可能な形である。** ここに一条足すたび、
@@ -11,11 +11,11 @@
 
 **番号は索引であって呼び名ではない**：不変条件はそれぞれ簡称を持ち、他所からの引用は
 `<番号>（簡称）` と書く。
-`doc-lint.sh` が強制する（`../singlefs-ai-sop/rules/kb-discipline.md` 第 5 条）。
+`doc-lint.sh` が強制する（`../singlefs-ai-sop/rules/kb-discipline.md` 第 5 条「番号は索引にしかならず、呼び名にはならない」）。
 
 <!-- doc-lint:registry name-col=2 -->
 
-| ID | 簡称 | 不変条件 | 検査の状態 |
+| 番号 | 簡称 | 不変条件 | 検査の状態 |
 |---|---|---|---|
 | I-1.1 | <この一条の短い名前> | <判定可能な言明> | 未実装 |
 

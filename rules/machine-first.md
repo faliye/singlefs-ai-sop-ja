@@ -1,4 +1,4 @@
-<!-- generated-from: rules/machine-first.md sha256:9846842cb51310df94a4bace5dbf7e57c573f8022ff23498fe99f5ebefe9541c -->
+<!-- generated-from: rules/machine-first.md sha256:92e21312c2e49e355359517e77a626981eaba132a9e78a5de0b865786dd0f7a4 -->
 <!-- doc-lint:rule-definition -->
 # 機械優先：まず「読める」と「検証できる」を分ける
 
@@ -15,8 +15,7 @@
 
 ### 前提一：コンテキスト窓は既に 2×10⁵ ～ 10⁶ トークンの桁にある
 
-200K / 500K / 1M の三段。1M 段なら一つの crate をそのテスト・kb・決定記録ごと
-一度に収められる。
+200K / 500K / 1M の三段。
 他社の数字はここに書かない。
 
 **口径**：これは**公称の窓の上限**であって、「窓全体で同じ精度を保つ」ではない。

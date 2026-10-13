@@ -1,4 +1,4 @@
-<!-- generated-from: rules/session-wrapup.md sha256:46bdb5e523e601088b06879c235a0dab05f0c8a6c6b10ed5567a047d10ac6a67 -->
+<!-- generated-from: rules/session-wrapup.md sha256:3fff699a80fe6cfb1aaa18103cbe042fff9c408f8b4e940ecc7fa737fe6f9e3d -->
 <!-- doc-lint:rule-definition -->
 # 締め：毎回の作業の終わりに必ず行うこと
 
@@ -73,7 +73,7 @@
   ステージする前に `git diff --cached --name-only` が空であることを確かめ、ステージした後・コミットする前にもう一度一覧と各ファイルの cached diff を確かめてから、パスを付けずに `git commit` する。
 
 履歴項目の番号の衝突はゲート段階「履歴項目の番号」（`历史条目编号`、`scripts/history-ordinal.sh`）が判定する：
-認識するのは中国語の形、つまり `### <日付>` の下に「（其 N）」と番号を付けた項目だけで、今回足したものが衝突すれば赤になる。
+認識するのは中国語の形、つまり `### <日付>` の下に「（其 <通し番号>）」と番号を付けた項目だけで、今回足したものが衝突すれば赤になる。
 プロジェクトがそれの認識しない採番の形を使うときだけ、プロジェクト側で赤くなる検査を足す
 （`rules/show-me-test.md`「踏んだ落とし穴は、注意書きではなく失敗する検査にする」）。
 
