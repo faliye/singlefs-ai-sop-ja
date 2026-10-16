@@ -2,7 +2,7 @@
 # 一行一条：<路径>  # 为什么不改。路径相对仓根，必须存在；改完一份删一行。
 scripts/fixtures/  # 各道检查自己的输入：样本里的名字与写法就是被判的对象，改了样本判的就不再是原来那件事；样本目录名（rmok、projok 这类）是用例名，还没回扫
 CHANGELOG.md  # 历史：每一版当时的原话，不改
-MANIFEST.sha256  # 生成的清单，跟着翻译文件重算
+SOURCE-MANIFEST.sha256  # 生成的清单，跟着翻译文件重算
 scripts/lib.sh  # 顶层函数与全局变量（C_GRN、C_RST、pkg_root、CMD_POS、head1、HEREDOC_RE、_awk_version 这类）是对外接口：项目的门禁阶段 source 它，改名会把下游弄坏
 scripts/preflight.py  # 顶层函数、类与常量（INTERPRETER_NAME_RE 这类）是对外接口：别的脚本与项目 import 它
 scripts/preflight.sh  # 顶层函数是对外接口：钩子与 lib.sh source 它

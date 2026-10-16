@@ -1,4 +1,4 @@
-<!-- generated-from: templates/CLAUDE.project.md sha256:4ab784d790e883bd5bc4471b3c87a01bb9b7fca0d849a69a16da83b7b5f34e58 -->
+<!-- generated-from: templates/CLAUDE.project.md sha256:31c6513d1a051b37c18473eb877346a3e0120ece7d642255b9d73f0c171d3fc8 -->
 # <プロジェクト名>
 
 <三〜五行：このプロジェクトが何か、今どのマイルストーンか、本線とどういう関係か。
@@ -51,6 +51,7 @@
 bash .claude/scripts/gate.sh          # 受入ゲート。提出前に必ず
 
 bash .claude/scripts/check.sh         # 速い折り返し（書式/lint/ビルド/単体テスト）
+bash .claude/scripts/doc-lint.sh      # 文書鉄則検査
 bash .claude/scripts/gate-lint.sh     # ゲート自身：拒否のすべてが次の一手を示しているか
 bash .claude/scripts/shell-lint.sh    # shell 規律：pkill -f / pgrep -f、サブシェルからの値の持ち出し、git の取り消し系コマンド、守りのない rm -rf、引数のない wait、pipefail 下で grep -q で終わるパイプ
 bash .claude/scripts/naming-lint.sh   # 命名規律：.rs の一文字名とよくある略語
