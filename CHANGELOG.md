@@ -4,6 +4,30 @@
 （design-doc-discipline）ので、履歴はここに記す。個々の変更の詳細は `git log`
 を参照——コミットメッセージがそのまま変更説明になっている。
 
+## 0.0.67 — 2026-10-18
+
+**0.0.63 で加えた `test-script-discipline.md` と、0.0.64・0.0.66 で加えた三つの規則を取り下げる。`evidence-discipline.md` に「産物が作業ツリーの外へアーカイブされたら、本文は一行のポインタにする」を新設。凍結証拠の一覧を読む処理を共用ライブラリ `evidence-exclude.py` にまとめる。`history-ordinal.sh` は中国語以外のリポジトリで未実装と報告。`stage-selftest.sh` の段階名はどこでも `.sh` を付けない。`push-all.sh` は master が追跡するリモートへ押す。自己検証のサンプルに `expect` や `exit=` が欠けたら赤**
+
+規則：
+- `rules/test-script-discipline.md` を削除し、`CLAUDE.md` と `templates/CLAUDE.project.md` から参照を外す。
+- `code-discipline.md`：節「バグを直したら、リポジトリ全体で論理やコードの似た箇所を厳しく探す」と、「ゲートが受け持つ半分」の対応する一行を削除。
+- `sop-first.md`：検証装置やテスト入口を立てる前に既存のものを探す節を削除。
+- `test-discipline.md`：対照をセルごとに固定する、セルごとにどの正式実行が対照を担うかを登録時に書く、事前登録・単体テスト・リプレイの三か所で正式実行を突き合わせる、の三項目と、「ゲートが受け持つ半分」の対応する二項目を削除。
+- `evidence-discipline.md`「産物を引くときは行ごと写す」：一項目を新設。産物が作業ツリーの外へアーカイブされたら、本文のその行は一行のポインタ `産物行は git show <コミット>:<パス> の第 N 行（name=<名>）` にし、指す先の行はプロジェクトルートの `.claude/product-line-prefixes` に登録した接頭辞で始まらなければならない。この検査はプロジェクトが登録した門番段階ディレクトリでつなぎ、つなぐまでは負債表に記す。
+
+スクリプトとゲート：
+- `evidence-exclude.py`（新規）：`.claude/doc-lint-exclude` に登録された凍結証拠ディレクトリを読むのはここ一か所だけ。`link-targets.py`、`number-name-sync.sh`、`relay-timing-lint.py` はそれぞれ写しを持ち、末尾スラッシュの扱いが分かれていたので、三つともこれを呼ぶ。`preflight-lint.py` はこれをライブラリとして登録。
+- `history-ordinal.sh`：パッケージの言語が中国語でないときは未実装と報告して 77 で終わり、「衝突なし」とは報告しない。`HISTORY_ORDINAL_LANG` は自己検証でサンプルの言語を固定するためだけのもの。`gate.sh` のこの段階のスキップ文もそれに合わせて書き直す。
+- `gate.sh`：`--staged` なしで `GATE_STAGED_TREE` が設定されていたら拒否。別の `--staged` 実行がまだ生きているかを判じるとき、そのプロセス番号のコマンドラインに本当に `gate.sh` があるかを確かめ、再利用されたプロセス番号は残骸として扱う。
+- `stage-selftest.sh`：段階名は二つの形態とも `.sh` を付けない（`--item` に `.sh` を付けても認め、一つの値に空白区切りで書いた名前はそれぞれ一段階と数える）。平らな形態と入れ子の形態で名前が衝突したら赤。`expect` に `exit=<数>` がなければ誤りとし、終了コード 0 の期待とは読まない。
+- `selftest.sh`、`claude-hooks/pattern-process-guard.sh`：サンプルに `expect` が欠けている、または `exit=` が数でないと赤。`selftest.sh` の入場条件の入力に `rules/`、`CLAUDE.md`、`GLOSSARY.md`、`.gitignore` を加える。
+- `push-all.sh`：master が追跡するリモートへ押す（追跡が設定されていなければ origin）。リモートが存在しなければ、押す段ではなく検証の段で赤。
+- `i18n-sync.sh`：共有部分に `.claude/abbreviations`、`.claude/settings.json`、`.claude/rules-lint-exclude` を加える。
+- `number-name-sync.sh`：略称を比べる前に `doc-lint.sh` と同じ正規化（`*`、`` ` `` と余分な空白を除く）をかける。`NUMBER_NAME_SYNC_VERBOSE=1` で食い違いを全件列挙。
+- `naming-lint.sh`：`.claude/naming-sweep-exclude` に登録された、まだ一通り直していないパスを一つずつ列挙。
+- `doc-lint.sh`：GLOSSARY の説明列は `<br>`、`<br/>`、`<br />` のどれでも切り分けられる。
+- `rules-lint.sh`：「否则」「不然」の後に読点を挟んで結果が続く文も認める。
+
 ## 0.0.66 — 2026-10-15
 
 **ゲート通過後の `diff_base` 基準フォールスルー不具合を修正し、`inputs-unchanged` の視覚的偽警告を解消；`.gitignore` を多言語共有リストに追加して保護；`.rs` ファイルが存在しない場合の `naming-lint` 終了コード矛盾と除外リスト検証を是正；`bump.sh` の引数解析を厳格化；`pattern-process-guard` に内蔵セルフテストを追加；Python バイトコード生成とデッド変数を整理**
