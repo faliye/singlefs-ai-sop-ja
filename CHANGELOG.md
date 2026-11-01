@@ -4,6 +4,25 @@
 （design-doc-discipline）ので、履歴はここに記す。個々の変更の詳細は `git log`
 を参照——コミットメッセージがそのまま変更説明になっている。
 
+## 0.0.68 — 2026-10-31
+
+**新しく五つ：テストは実際の条件で作る、破壊スイッチはどれも必ず赤くなる、一つの変更で関係するコードと設定をすべて変える、サブ agent を止めたらその変更と引き継ぎを決める、バックグラウンドとスクリプトのタスクの名前をはっきり書く。`shell-lint.sh` に S8（`/proc`・`/sys`・cgroupfs のファイルが空かをサイズで判定する）を追加。`check.sh` の clippy を特性の組み合わせごとに走らせる。**
+
+規則：
+- `test-discipline.md`：小節「テストは実際の条件で作り、達成できない条件をでっち上げない」「破壊スイッチはどれも必ず赤くなる」を追加。
+- `code-discipline.md`：小節「一つの変更で、関係するコードと設定をすべて変える」を追加（ローカル設定とプログラムが実行時にシステムへ書き込んだ設定も含める）。
+- `command-safety.md` のバックグラウンドのタスクとサブ agent の節：二項目を追加。サブ agent を止めたらその変更とやり終えていない作業の引き継ぎ先をその場で決める。バックグラウンドとスクリプトのタスクの名前は使用者と話している言語で書き、それが何かとどの件を待っているかを書き、同時に走っているものは同じ名前にしない。
+- `command-safety.md`：小節「装置が起動するサンプルのプロセスは、それ自身のプロセスグループに入れる」「`/proc`・`/sys`・cgroupfs のファイルは中身を読んで空かを判定する」を追加。`systemctl stop` の後は `is-active` の出力と `cgroup.procs` の中身を読み戻す。`coproc` の後ろもコマンド位置とみなす。
+- `session-wrapup.md`：項目を追加。インデックスを消す前に他人がステージしたものがないかを確かめ、自分のパスだけを消す。
+
+スクリプトとゲート：
+- `shell-lint.sh`：S8 を追加。`[ -s ]`、`stat` の `%s`、`find` の `-size` と `-empty` を `/proc/`・`/sys/` で始まるパスや `cgroup.<名前>` のパスに使うと赤。S3 は `coproc` の後ろの `pgrep -f` も認める。
+- `check.sh`：clippy をプロジェクトが登録した特性の組み合わせ（`.claude/clippy-feature-combinations`。登録がなければ特性なしと `--all-features` の二回）ごとに走らせる。破壊スイッチ `CHECK_BREAK=single-clippy-pass`。`gate.sh --staged` は一時ツリーにこの登録があるかを確かめる。
+- `gate-lint.sh`：`✗`・`✓` は出力された行の先頭だけを認める。破壊スイッチ `GATE_LINT_BREAK=anywhere-mark`。
+- `doc-lint.sh`：K の経路はプロジェクトが登録した、セッションの最初に一度読むローカル規則を認める。破壊スイッチ `DOC_LINT_BREAK=read-once-copy-only`。
+- `claude-hooks/pattern-process-guard.sh`：判定できない（入力が JSON でない、コマンドの抽出に失敗、判定が失敗）ときは 1、実行条件を満たさないときは 78 で終わる。どちらもコマンドはそのまま通し、判定しなかった旨を一行残す。
+- `selftest.sh`：以上の新しいサンプルと破壊スイッチをつなぐ。
+
 ## 0.0.67 — 2026-10-18
 
 **0.0.63 で加えた `test-script-discipline.md` と、0.0.64・0.0.66 で加えた三つの規則を取り下げる。`evidence-discipline.md` に「産物が作業ツリーの外へアーカイブされたら、本文は一行のポインタにする」を新設。凍結証拠の一覧を読む処理を共用ライブラリ `evidence-exclude.py` にまとめる。`history-ordinal.sh` は中国語以外のリポジトリで未実装と報告。`stage-selftest.sh` の段階名はどこでも `.sh` を付けない。`push-all.sh` は master が追跡するリモートへ押す。自己検証のサンプルに `expect` や `exit=` が欠けたら赤**

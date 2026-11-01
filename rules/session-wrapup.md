@@ -1,4 +1,4 @@
-<!-- generated-from: rules/session-wrapup.md sha256:3fff699a80fe6cfb1aaa18103cbe042fff9c408f8b4e940ecc7fa737fe6f9e3d -->
+<!-- generated-from: rules/session-wrapup.md sha256:a4d80b9dc4f5ed250c558f6e3e8c8132467e2622250e882941cc97dee38f6b13 -->
 <!-- doc-lint:rule-definition -->
 # 締め：毎回の作業の終わりに必ず行うこと
 
@@ -71,6 +71,7 @@
   ツールの層で止められる（書き込み前のフックが未追跡ファイルの上書きを拒む）なら、ツールの層で止める。
 - **「このパスだけをコミットする」は `git commit -- <パス>` ではない。** パスを渡したコミットは、そのパスの**作業ツリー**の中身をコミットするのであって、ステージの中身ではない。
   ステージする前に `git diff --cached --name-only` が空であることを確かめ、ステージした後・コミットする前にもう一度一覧と各ファイルの cached diff を確かめてから、パスを付けずに `git commit` する。
+- **「ステージにあるのは全部自分のもの」はもう成り立たない。** ステージを空にする（`git reset`、`git restore --staged .`）前に `git diff --cached --name-only` で他人がステージしたものがないか見る。外すのは自分のパスだけにする：`git restore --staged -- <パス…>`。
 
 履歴項目の番号の衝突はゲート段階「履歴項目の番号」（`历史条目编号`、`scripts/history-ordinal.sh`）が判定する：
 認識するのは中国語の形、つまり `### <日付>` の下に「（其 <通し番号>）」と番号を付けた項目だけで、今回足したものが衝突すれば赤になる。
