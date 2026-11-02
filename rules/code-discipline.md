@@ -1,4 +1,4 @@
-<!-- generated-from: rules/code-discipline.md sha256:340067c292c375df7887f5bd640eb27fce34789a31d94b41dabdced88f5a09f8 -->
+<!-- generated-from: rules/code-discipline.md sha256:cac39907dbeab6c977f909c9870504a32fb22a2fa47bdd86320c499f446260ca -->
 <!-- doc-lint:rule-definition -->
 # コーディング規律：machine-first の実施細則
 
@@ -35,6 +35,7 @@
 | **名前は単独で成り立たせ、モジュールパスで補わない** | `block::Address` ではなく `block::BlockAddress` と書く。その結果、型名が手作りの名前空間になる（`BlockAddress`、`JournalAddress`、`LogicalAddress`……）が、そのとおりに書く |
 | **番号や位置を名前にしない** | 関数、変数、引数、型、フィールド、定数、モジュール、ファイル、どの名前も同じ：`layer0`、`stream_0`、`step2`、`phase_1`、`first_item` のように「何番目か」しか言わない名前は使わない。何をするか、何を扱うかを書く：`stream_0` → `metadata_journal_stream`、`layer0` → `checksum_verification_layer`。本当に位置だけが違う複数の実体は一つのコレクションに入れ、型付きの添字で区別する（`stream_index: StreamIndex`）。一つずつ番号付きの名前を付けない。登録済みのプロジェクト番号は略称付きでそのまま使う。「略語登録表」を見よ |
 | **意味が変わったら名前を変える** | 同名のシャドーイングは意味が変わらないときだけ使う。生データが検証済みデータになった、バイト数がブロック数になった、というときは新しい名前を付ける |
+| **一つのスコープで一つの名前は一度だけ定義する** | 一つのファイルの同じスコープ（モジュール、クラス本体、関数本体。shell はファイル全体）で、関数・メソッド・クラスを同じ名前で二度定義しない。定義を足す前に、そのファイルでその名前を検索する。ぶつかったら片方を改名するか、片方を消す。property の setter、`@overload`、singledispatch の `register` は数えない |
 
 ### 略語は使わない。判定基準は権威ある定義が一箇所にあるか
 
@@ -355,6 +356,7 @@ fn walk(node: &VerifiedNode) { /* ... */ }   // 検証を飛ばすと、そも�
 | 値を失いうる `as` 変換 | clippy の `cast_possible_truncation`、`cast_sign_loss`、`cast_possible_wrap` |
 | `unsafe` ブロックには `// SAFETY:` | clippy の `undocumented_unsafe_blocks` |
 | 無関係な意味での同名のシャドーイング | clippy の `shadow_unrelated` |
+| `.py` と `.sh` の同じスコープで同名を二度定義する | `scripts/duplicate-definitions.py`（ゲート段階「同名定义」）：リポジトリ全体を走査し、凍結した証拠は走査しない。shell は行頭に書いた定義だけを判定する。後の定義で前の定義を上書きするのが意図どおりなら、後の定義の行に `# duplicate-definitions:allow <理由>` を書く。代入による関数の上書き、import した名前を def で上書きすること、ファイルをまたぐ同名は見分けられず、レビューに依る |
 | 警告はエラーとして扱う | clippy の `-D warnings` |
 | 名前が十分に言っているか、一つの概念が一つの名前か、関数が一つのことだけをしているか、コメントが「なぜ」を書いているか、コメントが別のファイルの行番号を引いていないか、名前やコメントが番号や位置を呼び名にしていないか、コメントに略語がないか、エラーの列挙子が呼び出し側の判断で分かれているか、ループの状態が書き出されているか、`..Default::default()` | レビュー |
 | `.rs` 以外のコード（シェル、python など）と文書にある名前、略語、符号による呼び名 | **まだ検査になっていない**。`gate.sh` が未実装の段階に挙げている（キー「命名纪律（shell）」） |

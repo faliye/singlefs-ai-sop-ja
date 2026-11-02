@@ -4,6 +4,30 @@
 （design-doc-discipline）ので、履歴はここに記す。個々の変更の詳細は `git log`
 を参照——コミットメッセージがそのまま変更説明になっている。
 
+## 0.0.69 — 2026-11-03
+
+**検査を三つ追加：同じスコープでの同名の二重定義、新しく加えた文章で符号で物を指すこと、派遣プロンプトでよそのやり方を出所なしに借りること。プロジェクトルートに新しいファイルやディレクトリを作らない（フックとゲート段階）。singlefs だけが使う数か所を共有規則から外した：作業ツリーのロック、cargo の前置き登録、systemd サービスの止め方、産物行のポインタ、並行のインターリーブを網羅判定するという前提。**
+
+規則：
+- `command-safety.md`：新しい節「プロジェクトルートに新しいファイルやディレクトリを作らない」。どうしても要るときは先に利用者に申請し、同意を得てからプロジェクトルートの `.claude/root-entries` に一行 `<名前>  # 理由` を登録して作る。
+- `code-discipline.md`：「名前」の表に一行「一つのスコープで一つの名前は一度だけ定義する」を追加。「ゲートが見るのはどちら半分か」にも対応する一行を追加。
+- `writing-discipline.md`「略語を書かず、符号で物を指さない」：ゲート段階「代号」が何を判定し何を判定しないかを明記。プロジェクト自身の番号体系は `.claude/code-names` に登録する。
+- `verify-before-claiming.md`：新しい節「よそのやり方を伝えるときは、出所か原文を付ける」。「ゲートが見るのはどちら半分か」にフック `borrowed-convention-guard.sh` が判定すると明記。
+- 削除：`session-wrapup.md` 第 4 条の作業ツリーのロックの一項。`command-safety.md` の cargo 前置き登録の段落、`systemctl` と `cgroup.procs` の読み戻し方の数行（「状態を変えるコマンドは状態を読み戻す」の一文は残す）、「重い仕事には記憶容量と装置から別に上限を定める」の半文、例の中の「判定の保存庫」。`evidence-discipline.md`「産物は行ごと写す」のうち、アーカイブ後の一行ポインタと `.claude/product-line-prefixes` の段落。`machine-first.md` の前提二「並行のインターリーブは既に網羅的に判定できる」と、取り下げ表のその一行。これらは singlefs だけが使うので、singlefs のローカル規則へ移した。
+
+スクリプトとゲート：
+- `duplicate-definitions.py`（新規）：ゲート段階「同名定义」。`.py` は ast でモジュール、クラス本体、関数本体の同名の def / async def / class を判定する（setter、getter、deleter、register、overload は通す）。`.sh` は同じファイルの行頭に書いた同名の関数を判定する。免除は `# duplicate-definitions:allow <理由>`。壊しスイッチ 4 つ。
+- `code-name-lint.py`（新規）：ゲート段階「代号」。diff 基準に対して新しく加わった `.md` の行だけを、数字のあとに小文字一つ、大文字二つのあとに数字二桁の二つの形について判定する。バッククォート、フェンス、HTML コメント、リンク、URL、番号付き手順を指すものは判定しない。プロジェクトは `.claude/code-names` に登録する。壊しスイッチ 7 つ。
+- `borrowed-convention.py` とフック `claude-hooks/borrowed-convention-guard.sh`（新規）：Agent、Task、SendMessage の PreToolUse で、借用の一文に同じ一文の中で `パス:行番号`、原文の引用、「パスと関数名」のどれも無ければ派遣を拒否する。壊しスイッチ 4 つ。
+- `root-entries.py` とフック `claude-hooks/root-entry-guard.sh`（新規）：ゲート段階「项目根的新条目」が、基準に対してルートに新しく加わった項目がすべて登録済みかを判定する。フックは登録の無いルートの新項目への Write、Edit、NotebookEdit を拒否し、登録表を変えるときは利用者に確認し、Bash の実行後に登録の無い項目が増えていればエージェントに報告する。
+- `source-files.py`（新規）：リポジトリのソースファイルの辿り方と、リポジトリが与えられないときにどれを判定するか。`relay-timing-lint.py` と `duplicate-definitions.py` が共用する。`relay-timing-lint.py` はこれを呼ぶようにし、出力は変わらない。
+- `break-switch-selftest.py`（新規）：python のゲートとフックが共用する自己証明の締めくくり。壊しスイッチを一つずつ入れ、名指しした見本で赤くなるかを確かめる。
+- `check.sh`：cargo の前置き登録（`.claude/cargo-command-prefix`）を削除し、cargo を直接起こす。`gate.sh --staged` はこの登録を見なくなり、`lib.sh` は対応する定数を消した。
+- `show-me-test.sh`：拒否時の出口で「ディスク形式」「クラッシュ回復」を例に挙げず、「プロジェクトの不変条件に関わる」「環境を起こさないと検証できない」とした。
+- `stage-selftest.sh`、`i18n-sync.sh`、`selftest.sh`：見本のコピーは `cp -dR --preserve=timestamps,links` で、権限を保持しない（NFS 共有ツリーでは権限の保持が失敗する）。
+- `skills/gate/SKILL.md`：表に「项目根的新条目」「同名定义」「代号」の三段階を追加し、「转发计时」の射程をリポジトリ全体に改めた。
+- `selftest.sh`：以上の見本を接続し、cargo 前置きの 8 件を削除。
+
 ## 0.0.68 — 2026-10-31
 
 **新しく五つ：テストは実際の条件で作る、破壊スイッチはどれも必ず赤くなる、一つの変更で関係するコードと設定をすべて変える、サブ agent を止めたらその変更と引き継ぎを決める、バックグラウンドとスクリプトのタスクの名前をはっきり書く。`shell-lint.sh` に S8（`/proc`・`/sys`・cgroupfs のファイルが空かをサイズで判定する）を追加。`check.sh` の clippy を特性の組み合わせごとに走らせる。**
