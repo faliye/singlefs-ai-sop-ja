@@ -4,6 +4,28 @@
 （design-doc-discipline）ので、履歴はここに記す。個々の変更の詳細は `git log`
 を参照——コミットメッセージがそのまま変更説明になっている。
 
+## 0.0.72 — 2026-11-11
+
+**このパッケージは検査が判定する規則だけを収める：検査の無い規則六篇と、各篇のうちレビュー頼みの節をパッケージから出し、プロジェクト側に戻した。コミュニケーション規律の「社交辞令を書かない」は終了時フック `courtesy-phrase-check.sh` が判定する。shell-lint の S5 は連結する行でガードの無い部分を判定する。符号検査に `⇒` と日付付きの現状文を追加。rules-lint に「本文に特定の利用者のものを書かない」を追加。**
+
+規則：
+- `evidence-discipline.md`、`engineering-philosophy.md`、`machine-first.md`、`test-discipline.md`、`verify-before-claiming.md`、`session-wrapup.md` を削除。検査が判定する節は残る規則へ移した：区間の計時は被測プロセスの中で取る節と、破壊スイッチは必ず赤になる節は `show-me-test.md` へ。結論の根拠にするコマンドは出力を捨てない節と、サブエージェントは引き渡す前に自分で作ったビルドディレクトリとリポジトリの写しを消す節は `command-safety.md` へ。よそのやり方を伝えるときは出所か原文を付ける節は `communication-discipline.md` へ。
+- `sop-first.md`「境界」：検査にできない規則はこのパッケージに入れず、プロジェクト側の `.claude/rules/` に置く。このパッケージの規則は節ごとに、どのスクリプトかフックが判定するかを書く。
+- `communication-discipline.md`：「社交辞令を書かない」（終了時フックが判定）と、よそのやり方を伝える節（送り出す前のフックが判定）だけを残す。
+- `pushback-discipline.md`：題を「警告の記録」に改め、警告ファイルの書式だけを残す。
+- `command-safety.md`：`rm -rf` のパスを複数の変数から連結するとき、連結する行の各部分に `${名前:?}` のガードを付ける。
+- `rules-discipline.md` 第 8 条、`kb-discipline.md` 第 8 条、`writing-discipline.md`：どのスクリプトがどの半分を判定するかを明記。
+- `code-discipline.md`、`design-doc-discipline.md`、`show-me-test.md`、`writing-discipline.md`：レビュー頼みの節をパッケージから出した。
+- 三言語の `CLAUDE.md` とプロジェクト用テンプレート：`@` で常駐するのは九篇。`code-discipline.md` と `preflight-discipline.md` はコードやスクリプトを書く前に一度読む。規則とスクリプトの変更はリリースを待たずに利用者プロジェクトの写しへ同期する。
+
+スクリプトとゲート：
+- `claude-hooks/courtesy-phrase-check.sh` と `courtesy-phrase.py`（新規）：終了時に、そのターンの最後の返信に語彙リストの社交辞令があるかを判定する。あれば終了を止めて書き直させる。同じ返信を止めるのは一度だけ。`Stop` と `SubagentStop` に登録する。
+- `shell-lint.sh`：連結した変数について、S5 は連結する行を判定し、`${名前:?}` の無い展開が一つでもあれば赤にする。
+- `code-name-lint.py`：接続詞として使った `⇒`（表の行とバッククォートの中は判定しない）と、kb で日付の後に現状を示すラベルとコロンが続く文の検査を追加。破壊スイッチ `arrow-ignored`、`dated-status-ignored` を追加。
+- `rules-lint.sh`：判定「利用者のもの」を追加：利用するプロジェクトの名前と、ゲートディレクトリの番号付きの具体的なファイル名。このパッケージ自身の規則だけを判定する。
+- `selftest.sh`：以上の項目の見本と破壊スイッチを接続。
+- スクリプトとフックの出口やファイル先頭で、削除した規則を指していた箇所を残る規則へ向け直した。
+
 ## 0.0.71 — 2026-11-11
 
 **規則「コミュニケーション規律」（会話は簡潔に、社交辞令を書かない、相手の気持ちに配慮して判断を和らげない）と skill `halt` を追加。shell-lint に S9（`$*`・`$@` の前置除去パターンに空白）と S10（人が読む出力をバイト単位で切る）を追加し、連結した変数への `rm -rf` も判定する。gate-lint に「スキップ数は項目を一件ずつ出す」を追加。任意登録のフック `discarded-output-count-check.sh` を追加。テスト規律と事前確認の規則に数項を追記。**

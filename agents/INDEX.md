@@ -1,4 +1,4 @@
-<!-- generated-from: agents/INDEX.md sha256:15ba3972baf020b2904c501b950dd8c2f9bfd34c0dc0503fd876298003588cf0 -->
+<!-- generated-from: agents/INDEX.md sha256:0e0cb3db0b441b28ca8902a6adb80d8d9ab89e1f8c52c409095117faaf2ff50a -->
 # 共有 subagent 定義
 
 **この層は統治下に入っているが、現在は空である**（`rules/kb-discipline.md` 第 3 条「「分からない」を明示的に記録する」）。
@@ -36,7 +36,6 @@ description: <いつ委譲すべきか：発動条件を書く>
 
 1. **出力形式を決め打ちにする。** 何を、どの順で、各項目にどの証拠を添えて返すかを書く。
 2. **走らせた結果だけを報告し、推測は報告しない。** 報告は自前で証拠を持つ（どのコマンド、どのファイル、どの出力）。
-   これは `rules/evidence-discipline.md` と同じ規律を委譲に当てたものである。
 3. **自分が何をしなかったかを言えること。** 走らせられなかったもの、検証していないものを
    明示的に列挙する（`rules/show-me-test.md`：未実装の段階は明示して並べる）。
 

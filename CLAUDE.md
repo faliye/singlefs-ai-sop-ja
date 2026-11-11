@@ -1,4 +1,4 @@
-<!-- generated-from: CLAUDE.md sha256:06cec33b290d2d71c6115d9fdc18dc75b0b86c8ff4fff03ba803946ef1d6e7cc -->
+<!-- generated-from: CLAUDE.md sha256:98ce248a585c3fca633a7b5afbe7fd42b8c407b51602b282f1d080471b8a9db0 -->
 <!-- doc-lint:rule-definition -->
 # singlefs-ai-sop-ja
 
@@ -8,7 +8,8 @@
 このリポジトリ内で作業するときも、これらの規則の対象となる。
 
 規範本体を変更したら**必ず同時に `VERSION` を上げる**。
-リリースは週ごとにまとめる：規則とスクリプトの変更はまず作業ツリーに溜め、週に一版にまとめる。誤検出・誤判定の修正もその版に溜めて一緒に出す。利用者プロジェクトはリリースごとに一度副本を同期する。
+リリースは週ごとにまとめる：規則とスクリプトの変更はまず作業ツリーに溜め、週に一版にまとめる。誤検出・誤判定の修正もその版に溜めて一緒に出す。
+作業ツリーの変更は、リリースを待たずに利用者プロジェクトの副本へ同期し、下流で合わせて直すものは同じ回に直す。`scripts/` を変えた日は、このリポジトリと利用者プロジェクトのゲートディレクトリのそれぞれで `shell-lint.sh` と `gate-lint.sh` を一度ずつ走らせ、赤はその場で直すか、それを受け持つセッションに渡す。
 **どのパスが「規範本体」かは `scripts/version-discipline.sh` の `GOVERNED` を正とする**
 ——一覧はそこ一箇所だけで、ここには写さない。
 上げたら `CHANGELOG.md` の先頭にその版の節を書く——一版一節、番号は飛ばさない。
@@ -39,25 +40,21 @@
 
 ## 規則（常時有効）
 
+**このパッケージに入れるのは、検査が判定する規則だけである**：判定できないものはプロジェクト固有の `.claude/rules/` に置く（`rules/sop-first.md`「境界」）。
 **説明と論証は `rules/` では余計である。** 規則に書くのは判定基準、手順、射程と例外、既定のやり方、参照先だけ（`rules/rules-discipline.md` 第 1 条「本文に書くのは四つだけ」、第 2 条「判定基準は残し、論証は出す」）。
 
-@rules/engineering-philosophy.md
 @rules/sop-first.md
 @rules/show-me-test.md
-@rules/machine-first.md
-@rules/code-discipline.md
 @rules/writing-discipline.md
 @rules/design-doc-discipline.md
 @rules/kb-discipline.md
 @rules/rules-discipline.md
-@rules/test-discipline.md
-@rules/evidence-discipline.md
-@rules/verify-before-claiming.md
 @rules/pushback-discipline.md
 @rules/communication-discipline.md
 @rules/command-safety.md
-@rules/preflight-discipline.md
-@rules/session-wrapup.md
+
+二篇は `@` で常駐させない。コードやスクリプトを書く前に一度全文を読み、その後は名前で引き直す：`rules/code-discipline.md`、`rules/preflight-discipline.md`。
+<!-- doc-lint:read-once code-discipline.md preflight-discipline.md -->
 
 ## 切り分けの判定基準
 

@@ -1,8 +1,7 @@
-<!-- generated-from: templates/kb/experiments.md sha256:33886d6ba2deb6401aeeb57b652c07872678225b0f8a4dfc31014259941064ab -->
+<!-- generated-from: templates/kb/experiments.md sha256:a85ed62d1ac1cc90026b1e7cd8badc4ffcd26677f0c94e4e803cead2f7b5885d -->
 # 実験記録
 
-実験は一件につき一つの問いに答える。**判定基準・閾値・破棄条項は走らせる前に決め打つ**
-（`../singlefs-ai-sop/rules/test-discipline.md`「実験を走らせる前に、答えが既に存在していてはならない」）。
+実験は一件につき一つの問いに答える。**判定基準・閾値・破棄条項は走らせる前に決め打つ。**
 判定基準を書き終えてから既存の結論を見に行く。走らせたあとで判定基準を変えたら
 それは新しい実験なので、走らせ直す。
 
