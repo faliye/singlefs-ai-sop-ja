@@ -4,6 +4,22 @@
 （design-doc-discipline）ので、履歴はここに記す。個々の変更の詳細は `git log`
 を参照——コミットメッセージがそのまま変更説明になっている。
 
+## 0.0.73 — 2026-11-13
+
+**フックを二つ追加：セッションの起動・再開時にタイトルの先頭へセッション番号を書く（`session-number-title.sh`）、終了前に別のセッションから届いたメッセージへ返信したかを確かめる（`unanswered-message-check.sh`）。stage-selftest は用例を並列に流す。naming-lint の誤判定を二つ修正。**
+
+規則：
+- `communication-discipline.md`：節「終了前に、別のセッションから届いたメッセージを一度確かめる」を追加。一通ごとに返信するか、返信の中に「返信しない <セッション名>：<理由>」の一行を書く。セッション名が無く送り元が unknown の通知は数えない。
+- `communication-discipline.md`：節「セッションのタイトルの先頭に番号を書く」を追加。タイトルは `(番号) タイトル`、番号は既定名 `<ディレクトリ名>-<番号>` の番号部分。取れないときはセッション ID から算出し、ほかのセッションが使う番号は避ける。
+
+スクリプトとゲート：
+- `claude-hooks/unanswered-message-check.sh` と `unanswered-message.py`（新規）：終了時に、返信も「返信しない」の一行も無いメッセージを列挙する。同じ一覧を止めるのは一度だけ。`Stop` に登録。
+- `claude-hooks/session-number-title.sh` と `session-number-title.py`（新規）：`SessionStart`（起動、再開、分岐）で番号を書き、`UserPromptSubmit` で消えた番号を付け直し自動のタイトルを入れる。利用者が付けたタイトルは番号を足すだけ。終了コード 2 は返さない。
+- `session-transcript.py`：フック入力の読み取りと、前回止めた内容の指紋の記録をここへ切り出し、`courtesy-phrase.py` と `unanswered-message.py` で共用。
+- `stage-selftest.sh`：用例は既定で並列に流す（`--jobs`、または `STAGE_SELFTEST_JOBS`、無ければ nproc）。結果は登録順に読み戻し、出した数と回収した数が合わなければ段階全体を赤にする。同時に走らせられない段階は `# stage-selftest: serial <理由>` を書く。破壊スイッチ `lose-one-result` を追加。
+- `naming-lint.sh`：バイト文字 `b'x'` の接頭辞 b は判定しない。先頭の a の後ろに別の段があるときは英語の冠詞として判定しない。
+- `selftest.sh`：上記の用例と破壊スイッチを接続。
+
 ## 0.0.72 — 2026-11-11
 
 **このパッケージは検査が判定する規則だけを収める：検査の無い規則六篇と、各篇のうちレビュー頼みの節をパッケージから出し、プロジェクト側に戻した。コミュニケーション規律の「社交辞令を書かない」は終了時フック `courtesy-phrase-check.sh` が判定する。shell-lint の S5 は連結する行でガードの無い部分を判定する。符号検査に `⇒` と日付付きの現状文を追加。rules-lint に「本文に特定の利用者のものを書かない」を追加。**

@@ -1,4 +1,4 @@
-<!-- generated-from: rules/communication-discipline.md sha256:8aba64a1b8736928d7c376173febc2b7026bcf15eea18f84418059545eee63ca -->
+<!-- generated-from: rules/communication-discipline.md sha256:78082dfca4aee487bb45bf68068ab2f0805a424d3cfb29397a2cd320b01c481f -->
 <!-- doc-lint:rule-definition -->
 # コミュニケーション規律
 
@@ -25,6 +25,23 @@
 フック `scripts/claude-hooks/borrowed-convention-guard.sh`（判定は `scripts/borrowed-convention.py`）がこの条を判定する：サブエージェントを出す前（Agent、Task）と SendMessage の前に判定し、借用の一文に同じ一文の中で出所も原文も無ければ拒否する。
 認識する借用の言い回しは `scripts/borrowed-convention.py` の `BORROW_PHRASES` のとおりで、そこに無い言い回しは判定しない。出所の指す先が正しいか、原文を正しく写したかは判定しない。
 プロジェクトは `.claude/settings.json` に登録する。書き方はそのフックのファイル先頭にある。
+
+## 終了前に、別のセッションから届いたメッセージを一度確かめる
+
+タスクが終わり、終了する前に一度確かめる：このセッションが別のセッションから受け取ったメッセージは、一通ごとに、そのセッションへ返信済みであるか、返信の中に「返信しない <セッション名>：<理由>」の一行があるか、どちらかである。
+
+終了時フック `scripts/claude-hooks/unanswered-message-check.sh`（判定は `scripts/unanswered-message.py`）がこの条を判定する：会話記録にある別のセッションからのメッセージに、その後そのセッション宛ての SendMessage も、返信の中の「返信しない」の一行も無ければ、終了を止めて一通ずつ列挙する。同じ一覧を止めるのは一度だけ。
+理由は 4 文字以上。サブエージェントが返した報告と、セッション名が無く送り元が unknown の通知（タスクサービスの結果通知など）は、別のセッションのメッセージに数えない。そのメッセージに返信が要るか、返信が答えになっているか、理由が成り立つかは判定しない。
+プロジェクトは `.claude/settings.json` の `Stop` に一度登録する。書き方はそのフックのファイル先頭にある。
+
+## セッションのタイトルの先頭に番号を書く
+
+セッションを起動・再開するたびに、セッションのタイトルの先頭にセッション番号を `(番号) タイトル` の形で書く。番号は Claude Code がセッションに付ける既定名 `<ディレクトリ名>-<番号>`（セッション一覧に出る名前）の番号の部分を取る。
+タイトルの変更で番号が消えたら、付け直す。
+
+フック `scripts/claude-hooks/session-number-title.sh`（処理は `scripts/session-number-title.py`）がこの条を行う：SessionStart（起動、再開、分岐）のときに Claude Code のセッション登録から番号を取ってタイトルに書き、UserPromptSubmit のときに消えた番号を付け直し、タイトルに番号しか無ければ自動で付いたタイトルを入れる。利用者が自分で付けたタイトルは番号を足すだけで、置き換えない。
+すでにタイトルのあるセッションを再開したとき、Claude Code が登録をタイトルに置き換え済みなら今回の新しい番号は取れず、タイトルにある古い番号をそのまま使う。タイトルにも番号が無い（セッションにずっと前から独自のタイトルが付いている）ときは、セッション ID の sha256 から 2 文字の番号を算出し、ほかのセッションが使っている番号は避ける。サブエージェントと対話型でないセッションには書かない。
+プロジェクトは `.claude/settings.json` の `SessionStart` と `UserPromptSubmit` にそれぞれ一度ずつ登録する。書き方はそのフックのファイル先頭にある。
 
 ## 範囲と例外
 
